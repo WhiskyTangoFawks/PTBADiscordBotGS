@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Main-Class: com.whiskytangofox.ptbadiscordbot.App
+Class-Path: commons-collections4-4.1.jar annotations-16.0.1.jar okio-1.1
+ 7.2.jar trove4j-3.0.3.jar jackson-core-2.9.8.jar opus-java-api-1.0.4.ja
+ r slf4j-api-1.6.1.jar nv-websocket-client-2.5.jar jsr305-3.0.2.jar jack
+ son-annotations-2.9.0.jar okhttp-3.13.0.jar slf4j-simple-1.6.1.jar jna-
+ 4.4.0.jar opus-java-natives-1.0.4.jar JDA-4.0.0_73.jar jackson-databind
+ -2.9.8.jar
+
