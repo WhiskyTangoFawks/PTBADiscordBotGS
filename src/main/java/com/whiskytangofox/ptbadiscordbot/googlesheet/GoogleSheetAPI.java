@@ -12,15 +12,16 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
+import com.google.api.services.sheets.v4.model.GridData;
+import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import com.whiskytangofox.ptbadiscordbot.App;
-
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class GoogleSheetAPI {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    private final Sheets service;
+    public final Sheets service;
 
     public GoogleSheetAPI() throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
@@ -83,10 +84,11 @@ public class GoogleSheetAPI {
      * @throws IOException
      */
     public String getCellValue(String sheetId, String tab, String cell) throws IOException {
-        String range = tab + "!" + cell + ":" + cell;
+        String range = cell + ":" + cell;
         try {
-            return getValues(sheetId, range).get(0).get(0).toString();
+            return getData(sheetId, tab, range).getRowData().get(0).getValues().get(0).getFormattedValue();
         } catch (NullPointerException e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -100,26 +102,20 @@ public class GoogleSheetAPI {
      * @throws IOException
      */
     public RangeWrapper getRange(String sheetID, String tab, String range) throws IOException {
-        ValueRange response = service.spreadsheets().values()
-                .get(sheetID, tab+"!"+range)
-                .execute();
-        return new RangeWrapper(response.getValues(), range);
+        return new RangeWrapper(getData( sheetID, tab, range), range);
     }
 
-    /**
-     *
-     * @param sheetID
-     * @param range
-     * @return
-     * @throws IOException
-     */
-    private List<List<Object>> getValues(String sheetID, String range) throws IOException {
-        ValueRange response = service.spreadsheets().values()
-                .get(sheetID, range.toUpperCase())
-                .execute();
-        List<List<Object>> values = response.getValues();
-        return values;
+    private GridData getData(String sheetID, String tab, String range) throws IOException {
+        ArrayList<String> ranges = new ArrayList<String>();
+        ranges.add((tab+"!"+range));
+
+        Sheets.Spreadsheets.Get request = service.spreadsheets().get(sheetID);
+        request.setRanges(ranges);
+        request.setFields("sheets/data/rowData/values/formattedValue,sheets/data/rowData/values/note");
+        Spreadsheet response = request.execute();
+        return response.getSheets().get(0).getData().get(0);
     }
+
 }
 
 

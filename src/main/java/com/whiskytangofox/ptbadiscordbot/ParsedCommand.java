@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.wrappers.DieWrapper;
+import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class ParsedCommand {
             "**MoveName**: if a move name or partial move name is included, the text of that move will be printed along with the roll result. If the move includes a single \"roll +STAT\" in it's text, (where STAT is a stat registered in the properties file), a +Stat tag for that stat is added to the roll command if one is not speicified. If used as a command without \"roll\", it will print the move text (without rolling)"+r+r+
             "**adv/dis**: roll and additional die, and drop the highest/lowest result";
 
-    public ParsedCommand(Game game, String author, String command) throws Exception {
+    public ParsedCommand(Game game, String author, String command) throws KeyConflictException, IOException, PlayerNotFoundException {
         this.author = author;
         this.game = game;
 
@@ -38,7 +39,7 @@ public class ParsedCommand {
         }
     }
 
-    public void splitAndParseCommand(String command) throws Exception {
+    public void splitAndParseCommand(String command) throws KeyConflictException {
         command = command.replaceAll("\\+", " ");
         String[] parameters = command.split("( )|/|(?=-)");
         for (int i = 0; i < parameters.length; i++) {
@@ -74,7 +75,7 @@ public class ParsedCommand {
         }
     }
 
-    public String getRollResults() throws Exception {
+    public String getRollResults() throws IOException, PlayerNotFoundException {
             if ((dice.size() == 0)) {
                 //TODO - implement a default_roll property
                 dice.add(new DieWrapper(2, 6));
@@ -93,7 +94,7 @@ public class ParsedCommand {
         return stringToCheck.matches(".*\\dd\\d.*");
     }
 
-    public void parseDieNotation(String token) throws Exception {
+    public void parseDieNotation(String token) {
         String[] rollParameters = token.split("d");
 
         int num = 0;

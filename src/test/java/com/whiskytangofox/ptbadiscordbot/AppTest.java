@@ -63,7 +63,7 @@ public class AppTest {
     public void testRegisterGameBadFormat() {
         app.registerGame(mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqH");
         //assertTrue(app.registeredGames.containsKey(mockChannel));
-        verify(mockChannel).sendMessage("Unable to extract sheet ID");
+        verify(mockChannel).sendMessage("Unexpected error: Unable to extract sheet ID");
 
     }
 

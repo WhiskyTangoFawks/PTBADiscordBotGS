@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -37,6 +38,19 @@ public class GameTest {
     }
 
     @Test
+    public void testLoadPropertiesStats() throws IOException {
+        game.loadProperties();
+        List<String> stats = game.getAllStats();
+        assertEquals(stats.size(), 6);
+        assertTrue(stats.contains("str"));
+        assertTrue(stats.contains("dex"));
+        assertTrue(stats.contains("con"));
+        assertTrue(stats.contains("int"));
+        assertTrue(stats.contains("wis"));
+        assertTrue(stats.contains("cha"));
+    }
+
+    @Test
     public void testStorePlayerTab() throws IOException {
         game.loadProperties();
         game.storePlayerTab();
@@ -60,12 +74,12 @@ public class GameTest {
     }
 
     @Test
-    public void testLoadPlaybookMoves() throws IOException {
+    public void testLoadPlaybookMoves() throws Exception {
         game.loadProperties();
         game.storePlayerTab();
         game.loadDiscordNamesFromStoredPlayerTab();
         game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
-        game.loadPlaybookMoves("test", 0);
+        game.loadPlaybookMovesForPlayer("test", 0);
         assertTrue(game.playbookMovesPlayerMap.containsKey("test"));
         PatriciaTrieIgnoreCase<MoveWrapper> testMoves = game.playbookMovesPlayerMap.get("test");
         assertTrue(testMoves.containsKey("Armored"));
@@ -80,10 +94,12 @@ public class GameTest {
         game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
         assertNotNull(game.getMove("test", "Aid"));
 
-        game.loadPlaybookMoves("test", 0);
+        game.loadPlaybookMovesForPlayer("test", 0);
         assertNotNull(game.getMove("test", "Aid"));
         assertNotNull(game.getMove("test", "Armored"));
         assertTrue(game.getMove("test", "Last Breath").text.contains("Hard to Kill"));
+        assertTrue(game.getMove("test", "Parley").text.contains("Intimidating"));
+        assertTrue(game.getMove("test", "Defy Danger").text.contains("Intimidating"));
 
     }
 
@@ -108,13 +124,13 @@ public class GameTest {
         game.loadProperties();
         game.storePlayerTab();
         game.loadDiscordNamesFromStoredPlayerTab();
-        String msg = "";
+        Exception ex = null;
         try {
             int stat = game.getStat("NotARealAuthor", "str");
         } catch (Exception e){
-            msg = e.getMessage();
+            ex = e;
         }
-        assertTrue(msg.contains("No playbook found registered to"));
+        assertTrue(ex instanceof PlayerNotFoundException);
     }
 
 }

@@ -82,20 +82,15 @@ public class App extends ListenerAdapter {
             channel.sendMessage("Game registered").queue();
             registeredGames.put(channel, game);
             return true;
-        } catch (IOException e) {
-            String ecode = e.getMessage().substring(0, 3);
-            String response = switch (ecode) {
+        } catch (Throwable e) {
+            String response = switch (e.getMessage().substring(0, 3)) {
                 case "403" -> "403 Forbidden: The sheet does not have the appropriate share permissions";
                 case "404" -> "404 Not Found: SheetID does not have a google sheet";
                 default -> "Unexpected error: " + e.getMessage();
             };
-
-            channel.sendMessage(response);
             logger.info(response);
             e.printStackTrace();
-            return false;
-        } catch (IllegalArgumentException e) {
-            channel.sendMessage(e.getMessage());
+            channel.sendMessage(response);
             return false;
         }
     }

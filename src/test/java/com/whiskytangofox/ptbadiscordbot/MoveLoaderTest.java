@@ -2,8 +2,7 @@ package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
+import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -23,19 +22,24 @@ public class MoveLoaderTest {
     String tab = "movetest";
 
 
-    private static Boolean isMoveInList(ArrayList<MoveWrapper> moves,String moveName){
-        for (MoveWrapper move : moves){
-            if (moveName.equalsIgnoreCase(move.name)){
+    private static Boolean isMoveInList(ArrayList<MoveBuilder> moves,String moveName){
+        for (MoveBuilder move : moves){
+            if (moveName.equalsIgnoreCase(move.get(0))){
                 return true;
             }
         }
         return false;
     }
 
-    private static Boolean isMoveInList(ArrayList<MoveWrapper> moves, String name, String text){
-        for (MoveWrapper move : moves){
-            if (name.equalsIgnoreCase(move.name)){
-                return move.text.toLowerCase().contains(text.toLowerCase());
+    private static Boolean isMoveInList(ArrayList<MoveBuilder> moves, String name, String text){
+        for (MoveBuilder move : moves){
+            if (name.equalsIgnoreCase(move.get(0))){
+                for (int i = 0; i < move.lastIndex()+1; i++) {
+                    if (move.get(i).toLowerCase().contains(text.toLowerCase())){
+                        return true;
+                    }
+
+                }
             }
         }
         return false;
@@ -51,7 +55,7 @@ public class MoveLoaderTest {
     public void testGetValueIntInt() throws Exception {
         String rangeRef = "A1:F14";
         RangeWrapper range = api.getRange(sheetID, tab, rangeRef);
-        ArrayList<MoveWrapper> list = MoveLoader.loadMovesFromRange(range, new PatriciaTrieIgnoreCase<MoveWrapper>());
+        ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertFalse(isMoveInList(list, "b10"));
         assertFalse(isMoveInList(list, "b10"));
@@ -70,7 +74,7 @@ public class MoveLoaderTest {
         RangeWrapper range = api.getRange(sheetID, tab, fullTab);
         String subRange = "A1:C7";
 
-        ArrayList<MoveWrapper> list = MoveLoader.loadMovesFromRange(range, new PatriciaTrieIgnoreCase<MoveWrapper>());
+        ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertFalse(isMoveInList(list, "b10"));
         assertFalse(isMoveInList(list, "C10"));
@@ -88,7 +92,7 @@ public class MoveLoaderTest {
         RangeWrapper range = api.getRange(sheetID, tab, fullTab);
         String subRange = "A1:C10";
 
-        ArrayList<MoveWrapper> list = MoveLoader.loadMovesFromRange(range, new PatriciaTrieIgnoreCase<MoveWrapper>());
+        ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertFalse(isMoveInList(list, "b10"));
         assertFalse(isMoveInList(list, "C10"));
@@ -110,7 +114,7 @@ public class MoveLoaderTest {
         RangeWrapper range = api.getRange(sheetID, tab, fullTab);
         String subRange = "A5:F9";
 
-        ArrayList<MoveWrapper> list = MoveLoader.loadMovesFromRange(range, new PatriciaTrieIgnoreCase<MoveWrapper>());
+        ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertTrue(isMoveInList(list, "b2"));
         assertTrue(isMoveInList(list, "d2"));
@@ -130,36 +134,24 @@ public class MoveLoaderTest {
     public void advancedMoveLoadTest() throws Exception {
         String fullTab = "B12:D20";
         RangeWrapper range = api.getRange(sheetID, tab, fullTab);
-        ArrayList<MoveWrapper> list = MoveLoader.loadMovesFromRange(range, new PatriciaTrieIgnoreCase<MoveWrapper>());
+        ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertTrue(isMoveInList(list, "c15"));
         assertTrue(isMoveInList(list, "c15", "B16"));
         assertFalse(isMoveInList(list, "c18"));
     }
 
-
-
     @Test
-    public void testSecondaryMoveLoad() throws Exception {
-        String basicRef = "H2:H3";
-        RangeWrapper basicRange = api.getRange(sheetID, tab, basicRef);
-        ArrayList<MoveWrapper> basicList = MoveLoader.loadMovesFromRange(basicRange, new PatriciaTrieIgnoreCase<MoveWrapper>());
-
-        PatriciaTrieIgnoreCase<MoveWrapper> basicTrie = new PatriciaTrieIgnoreCase<MoveWrapper>();
-        for (MoveWrapper move:basicList){
-            basicTrie.put(move.name, move);
-        }
-
-        String playerRef = "H5:H6";
+    public void testListMoveLoad() throws IOException {
+        String playerRef = "G9:J14";
         RangeWrapper range2 = api.getRange(sheetID, tab, playerRef);
 
-        ArrayList<MoveWrapper> secondaryMoves = MoveLoader.loadMovesFromRange(range2, basicTrie);
-        assertTrue(isMoveInList(secondaryMoves, "H5 (H2)"));
-        assertTrue(isMoveInList(secondaryMoves, "h2"));
-        //assertEquals("int", player.get("h2").stat);
+        ArrayList<MoveBuilder> secondaryMoves = MoveLoader.loadMovesFromRange(range2);
+        assertTrue(isMoveInList(secondaryMoves, "H10", "H12"));
+        assertFalse(isMoveInList(secondaryMoves, "H11"));
+        assertFalse(isMoveInList(secondaryMoves, "I11"));
+        assertFalse(isMoveInList(secondaryMoves, "I12"));
     }
-
-
 
 
 

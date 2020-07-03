@@ -71,5 +71,20 @@ public class PatriciaTrieIgnoreCaseTest {
         assertTrue(thrown);
     }
 
+    @Test
+    public void putPartialKeyConflict() throws Exception {
+        PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<String>();
+        test.put("key11", "value1");
+        test.put("Key12", "value2");
+        boolean thrown = false;
+        try {
+            test.getClosestMatch("K");
+        } catch (Exception e){
+            thrown = true;
+        }
+        assertTrue(thrown);
+    }
+
+
 
 }

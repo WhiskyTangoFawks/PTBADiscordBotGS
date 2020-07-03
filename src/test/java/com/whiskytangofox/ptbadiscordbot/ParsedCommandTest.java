@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
+import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -144,10 +145,15 @@ public class ParsedCommandTest {
     @Test
     public void splitAndParseCommand5() throws Exception {
         tester = new ParsedCommand(game, "test1", null);
-        game.loadBasicMoves("Violence & Recovery Moves!A1:BC27");
         game.loadProperties();
         game.storePlayerTab();
+        game.loadBasicMoves("Violence & Recovery Moves!A1:BC27");
         game.loadDiscordNamesFromStoredPlayerTab();
+
+        MoveWrapper move = game.getMove("test1", "Hack and Slash");
+        assertEquals("Hack and Slash", move.name);
+        assertEquals("str", move.stat);
+
         tester.splitAndParseCommand("roll hack +10");
         assertEquals("Hack and Slash", tester.move.name);
 

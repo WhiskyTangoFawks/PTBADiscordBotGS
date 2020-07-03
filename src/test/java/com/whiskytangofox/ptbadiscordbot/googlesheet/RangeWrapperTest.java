@@ -100,5 +100,12 @@ public class RangeWrapperTest {
         assertEquals("AA1", range.getValue("AA1").toUpperCase());
     }
 
+    @Test
+    public void testGetNoteValues() throws IOException {
+        RangeWrapper range = api.getRange(sheetID, "test", "A1:AA100");
+        assertEquals("notea1", range.getNote("A1"));
+        assertEquals("noteb3", range.getNote(2, 3));
+        assertEquals("noteb3", range.getColumnOffsetNote("A3", 1));
+    }
 
 }

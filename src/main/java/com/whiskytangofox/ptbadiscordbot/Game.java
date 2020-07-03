@@ -2,16 +2,18 @@ package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
+import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.whiskytangofox.ptbadiscordbot.App.logger;
 
 public class Game {
 
@@ -26,15 +28,18 @@ public class Game {
     public RangeWrapper storedPlayerTab;
     private final MessageChannel channel;
 
-    public Game(MessageChannel channel, String sheetID) throws IOException {
+    public Game(MessageChannel channel, String sheetID) throws IOException, KeyConflictException {
         this.channel = channel;
         this.sheetID = sheetID;
-        if (channel != null) { //if channel == null, then we are running tests
+        if (channel != null) try { //if channel == null, then we are running tests
             loadProperties();
             storePlayerTab();
             loadDiscordNamesFromStoredPlayerTab();
             loadBasicMoves(sheet_definitions.getProperty("basic_moves"));
             loadAllPlaybookMoves();
+        } catch (Exception e){
+            sendGameMessage("Unexpected exception while trying to register game");
+            throw e;
         }
     }
 
@@ -44,41 +49,59 @@ public class Game {
 
     public void OnMessageReceived(MessageReceivedEvent event) {
 
-        //if (!isPlayerHasSheet(event.getAuthor().getName().toLowerCase())) {
-        //    App.logger.warn("Command received, but no player registered for " + event.getAuthor().getName());
-        //}
-
         String msg = event.getMessage().getContentDisplay();
         try {
             if (msg.startsWith(sheet_definitions.getProperty("commandchar"))) {// /alias string
                 msg = msg.toLowerCase().replace(sheet_definitions.getProperty("commandchar"), "");
-                ParsedCommand command = new ParsedCommand(this, event.getAuthor().getName(), msg);
-                String response = "";
-                if (command.move != null) {
-                    response = response + command.move.text + System.lineSeparator();
+                if (msg.replace(" ", "").equalsIgnoreCase("reloadgame")){
+                    reloadGame();
+                    sendGameMessage("Game successfully reloaded");
+                } else {
+                    ParsedCommand command = new ParsedCommand(this, event.getAuthor().getName(), msg);
+                    String response = "";
+                    if (command.move != null) {
+                        response = response + command.move.text + System.lineSeparator();
+                    }
+                    if (command.rollResult != null) {
+                        response = response + event.getAuthor().getAsMention() + " " + command.rollResult;
+                    }
+                    sendGameMessage(response);
                 }
-                if (command.rollResult != null) {
-                    response = response + event.getAuthor().getAsMention() + " " + command.rollResult;
-                }
-                event.getMessage().getChannel().sendMessage(response).queue();
             }
 
         } catch (Throwable e) {
-            event.getChannel().sendMessage("Exception: " + e.toString()).queue();
+            sendGameMessage("Exception: " + e.toString());
             e.printStackTrace();
         }
     }
 
+    public void sendGameMessage(String msg){
+        channel.sendMessage(msg).queue();
+    }
+
+    public void reloadGame() throws IOException, KeyConflictException {
+        loadProperties();
+        storePlayerTab();
+        loadDiscordNamesFromStoredPlayerTab();
+        loadBasicMoves(sheet_definitions.getProperty("basic_moves"));
+        loadAllPlaybookMoves();
+    }
+
     public void loadProperties() throws IOException {
-        RangeWrapper range = App.googleSheetAPI.getRange(sheetID, "properties", "A1:A100");
-        for (String prop : range.getValueSet()) {
-            if (prop != null && prop.contains("=")) {
-                sheet_definitions.put(prop.split("=")[0], prop.split("=")[1]);
-            }
+        try {
+            RangeWrapper range = App.googleSheetAPI.getRange(sheetID, "properties", "A1:A100");
+            range.getValueSet().stream()
+                    .filter(prop -> prop != null)
+                    .filter(prop -> prop.contains("="))
+                    .forEach(prop -> sheet_definitions.put(prop.split("=")[0], prop.split("=")[1]));
+        } catch (Exception e){
+            sendGameMessage("Unexpected exception while trying to load properties");
+            throw e;
         }
     }
 
     public void loadDiscordNamesFromStoredPlayerTab() {
+        try {
         String numSheets = sheet_definitions.getProperty("num_playbooks_to_load");
         int numSheetsToLoad = Integer.parseInt(numSheets);
         CellRef nameCell = new CellRef(sheet_definitions.getProperty("discord_player_name"));
@@ -86,46 +109,79 @@ public class Game {
         for (int i = 0; i < numSheetsToLoad; i++) {
             int offset = sheetWidth * i;
             String discordPlayerName = storedPlayerTab.getColumnOffsetValue(nameCell.getCellRef(), offset);
-            if (discordPlayerName != null && !discordPlayerName.isBlank() && !discordPlayerName.equalsIgnoreCase("<type player name>")) {
+            if (discordPlayerName != null && !discordPlayerName.isBlank() && !discordPlayerName.contains("<type")) {
                 playerOffsets.put(discordPlayerName.toLowerCase(), offset);
-                App.logger.info("Loaded sheet for :" + discordPlayerName + ":");
+                logger.info("Detected assigned sheet for :" + discordPlayerName + ":");
             }
+        }
+        } catch (Exception e){
+            sendGameMessage("Unexpected exception while trying to loading player discord names");
+            throw e;
         }
     }
 
     public void loadBasicMoves(String rangeString) throws IOException {
-        for (String rangeRef : rangeString.split(",")) {
-            String tab = rangeRef.split("!")[0];
-            String rangeToLoad = rangeRef.split("!")[1];
-            RangeWrapper range = App.googleSheetAPI.getRange(sheetID, tab, rangeToLoad);
-            ArrayList<MoveWrapper> moveList = MoveLoader.loadMovesFromRange(range, basicMoves);
-            for (MoveWrapper move : moveList) {
-                basicMoves.put(move.name, move);
+        try {
+            for (String rangeRef : rangeString.split(",")) {
+                String tab = rangeRef.split("!")[0];
+                String rangeToLoad = rangeRef.split("!")[1];
+                RangeWrapper range = App.googleSheetAPI.getRange(sheetID, tab, rangeToLoad);
+                ArrayList<MoveBuilder> moveList = MoveLoader.loadMovesFromRange(range);
+                for (MoveBuilder builder : moveList) {
+                    MoveWrapper move = builder.getMoveForGame(this);
+                    basicMoves.put(move.name, move);
+                    logger.info("Loaded basic move: " + move.name);
+                }
+            }
+        } catch (Exception e){
+            sendGameMessage("Unexpected exception while trying to load properties");
+            throw e;
+        }
+    }
+
+    public void loadAllPlaybookMoves() throws KeyConflictException {
+        for (Map.Entry<String, Integer> entry : this.playerOffsets.entrySet()) {
+            try {
+                String player = entry.getKey();
+                int offset = entry.getValue();
+                loadPlaybookMovesForPlayer(player, offset);
+            } catch (Exception e){
+                sendGameMessage("Unexpected error loading playbooks for " + entry.getKey());
+                logger.info("Error loading playbooks for " + entry.getKey());
             }
         }
     }
 
-    public void loadAllPlaybookMoves() {
-        for (Map.Entry<String, Integer> entry : this.playerOffsets.entrySet()) {
-            String player = entry.getKey();
-            int offset = entry.getValue();
-            loadPlaybookMoves(player, offset);
-        }
-    }
-
-    public void loadPlaybookMoves(String player, int offset){
+    public void loadPlaybookMovesForPlayer(String player, int offset) throws KeyConflictException {
         PatriciaTrieIgnoreCase<MoveWrapper> playerMoves = new PatriciaTrieIgnoreCase<MoveWrapper>();
+        playbookMovesPlayerMap.put(player, playerMoves);
         String play_book_moves_ranges = sheet_definitions.getProperty("play_book_moves_range");
         for (String range : play_book_moves_ranges.split(",")) {
             RangeWrapper rangeToLoad = new RangeWrapper(this.storedPlayerTab, range, offset);
-            ArrayList<MoveWrapper> moveList = MoveLoader.loadMovesFromRange(rangeToLoad, basicMoves);
-            //TODO currently a secondary Advanced move based on a playbook move won't load, because it
-            //is only being fed teh basic moves, not the parsed secondary moves from the previous list
-            for (MoveWrapper move : moveList) {
-                playerMoves.put(move.name, move);
+            ArrayList<MoveBuilder> moveList = MoveLoader.loadMovesFromRange(rangeToLoad);
+            for (MoveBuilder builder : moveList) {
+                try {
+                    //TODO - add any metadata processing here
+                    MoveWrapper move = builder.getMoveForGame(this);
+                    playerMoves.put(move.name, move);
+                    logger.info(player + ": loaded playbook move: " + move.name);
+                    for (String moveName : builder.getModifiesMoves()) {
+                        if (isMove(player, moveName)){
+                            MoveWrapper copy = getMove(player, moveName).getModifiedCopy(move);
+                            playerMoves.put(copy.name, copy);
+                            logger.info(player + ": loaded playbook move: " + copy.name);
+                        } else {
+                            sendGameMessage("Could not find " + moveName + " while loading " + move.name);
+                            throw new IllegalArgumentException("Could not find " + moveName + " while loading " + move.name);
+                        }
+                    }
+                } catch (Exception e){
+                    sendGameMessage("Error building move " + builder.get(0));
+                    logger.info("Error building move " + builder.get(0));
+                }
             }
-            playbookMovesPlayerMap.put(player, playerMoves);
         }
+
     }
 
     public boolean isMove(String author, String string) {
@@ -136,13 +192,13 @@ public class Game {
         }
     }
 
-    public MoveWrapper getMove(String player, String key) throws Exception {
+    public MoveWrapper getMove(String player, String key) throws KeyConflictException {
         try {
             if (playbookMovesPlayerMap.get(player) != null && playbookMovesPlayerMap.get(player).getClosestMatch(key) != null) {
                 return playbookMovesPlayerMap.get(player).getClosestMatch(key);
             }
         } catch (Exception e) {
-
+            //Catch the missing name exception
         }
         return basicMoves.getClosestMatch(key);
     }
@@ -161,21 +217,30 @@ public class Game {
 
     private String getColumnOffsetLiveValue(String cell, int columnOffset) throws IOException {
         CellRef cellref = new CellRef(cell);
-        return App.googleSheetAPI.getCellValue(sheetID, sheet_definitions.getProperty("playbook_tab"), cellref.getColumnOffsetCellRef(columnOffset));
+        return getLiveCellValue(cellref.getColumnOffsetCellRef(columnOffset));
     }
 
-    public String getLivePlayerValue(String player, String key) throws Exception {
+    public String getLivePlayerValue(String player, String key) throws PlayerNotFoundException, IOException {
         if (!playerOffsets.containsKey(player.toLowerCase())) {
-            throw new Exception("No playbook found registered to " + player);
+            throw new PlayerNotFoundException("No playbook found registered to " + player);
         }
         return getColumnOffsetLiveValue(sheet_definitions.getProperty(key), playerOffsets.get(player.toLowerCase()));
     }
 
-    public int getStat(String author, String stat) throws Exception {
+    public int getStat(String author, String stat) throws IOException, PlayerNotFoundException {
         String value = getLivePlayerValue(author, "stat_" + stat);
         boolean isDebilitated = Boolean.parseBoolean(getLivePlayerValue(author, "stat_" + stat + "_penalty"));
         int penalty = isDebilitated ? 1 : 0;
         return Integer.parseInt(value) - penalty;
+    }
+
+    public List<String> getAllStats(){
+        return sheet_definitions.keySet().stream()
+                .map(prop -> prop.toString())
+                .filter(prop -> prop.startsWith("stat_"))
+                .filter(prop -> !prop.contains("_penalty"))
+                .map(prop -> prop.substring(5))
+                .collect(Collectors.toList());
     }
 
     public boolean isStat(String string) {

@@ -1,8 +1,8 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
+import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,72 +11,52 @@ import java.util.ArrayList;
 public class MoveLoader {
     static final Logger logger = LoggerFactory.getLogger(App.class);
 
-    public static ArrayList<MoveWrapper> loadMovesFromRange(RangeWrapper sheet, PatriciaTrieIgnoreCase<MoveWrapper> basicMoves) {
-        ArrayList list = new ArrayList<MoveWrapper>();
+    public static ArrayList<MoveBuilder> loadMovesFromRange(RangeWrapper sheet) {
+        ArrayList<MoveBuilder> list = new ArrayList<MoveBuilder>();
         for (int i = sheet.firstCell.getColumnInt(); i < sheet.lastCell.getColumnInt() + 1; i++) {
             for (int j = sheet.firstCell.getRow(); j < sheet.lastCell.getRow() + 1; j++) {
 
-                String moveName = sheet.getValue(i, j);
-                if ("true".equalsIgnoreCase(moveName)) {
-                    moveName = sheet.getValue(i + 1, j);
-                } else if ("false".equalsIgnoreCase(moveName)) {
-                    moveName = null;
-                }
-                if (moveName == null || moveName.isEmpty()) {
-                    continue;
-                }
-
-                String moveText = "";
+                MoveBuilder builder = new MoveBuilder();
                 boolean breakColumn = false;
-                for (int k = 1; !breakColumn; k++) {
+                for (int k = 0; !breakColumn; k++) {
+                    builder.addLine();
 
-                    String row = "";
+                    String tempAbove = sheet.getValue(i, j-1);
+                    String tempLeft = sheet.getValue(i-1, j);
+
+                    boolean okToStart = (tempAbove == null || tempAbove.isEmpty()) &&
+                            (tempLeft == null || tempLeft.isEmpty());
+
                     boolean enabled = true;
                     boolean breakRow = false;
+                    if (!okToStart){
+                        breakRow = true; // don't start without blank above and to the left
+                    }
                     for (int l = 0; !breakRow; l++) {
 
-                        String temp = sheet.getValue(i + l, j + k);
-                        if (null == temp || temp.isEmpty()) {
+                        String value = sheet.getValue(i+l, j+k);
+                        if (null == value || value.isEmpty()) {
                             breakRow = true;
-                        } else if ("true".equalsIgnoreCase(temp)) {
+                        } else if ("true".equalsIgnoreCase(value)) {
                             enabled = true;
-                        } else if ("false".equalsIgnoreCase(temp)) {
-                            if (row.isEmpty()) {
-                                row = " ";
+                        } else if ("false".equalsIgnoreCase(value)) {
+                            if (builder.get(k).isEmpty()) {
+                                builder.set(k, " ");
                             }
                             enabled = false;
                         } else if (enabled) {
-                            row = row.isBlank() ? temp : row + " " + temp;
+                             builder.extend(k, value);
                         }
+                        //TODO - enable note usage
+                        //String note = sheet.getNote(i+l, j+k);
+                        //builder.addNote(note);
                     }
-                    if (row.isEmpty()) {
+                    if (builder.get(k).isEmpty()) {
                         breakColumn = true;
-                    } else if (!row.isBlank()) {
-                        moveText = moveText + System.lineSeparator() + row;
                     }
                 }
-                if (!moveText.isBlank() && !moveName.isBlank()) {
-                    MoveWrapper move = new MoveWrapper(moveName, moveName + moveText);
-
-                    //Secondary moves
-                    if (move.name.contains("(")) {
-                        int beginIndex = move.name.indexOf("(");
-                        int endIndex = move.name.indexOf(")");
-                        MoveWrapper basicMove = getMoveFromList(move.name.substring(beginIndex + 1, endIndex), list);
-                        if (basicMove == null){
-                            basicMove = basicMoves.get(move.name.substring(beginIndex + 1, endIndex));
-                        }
-                        if (basicMove == null) {
-                            throw new IllegalArgumentException("During load Secondary move, basic move load failed: " + move.name.substring(beginIndex + 1, endIndex));
-                        }
-                        MoveWrapper basicMove2 = new MoveWrapper(basicMove.name, basicMove.text);
-                        basicMove2.appendSecondaryMove(move);
-                        list.add(basicMove2);
-                        logger.info("RELoaded basic move: " + basicMove2.name + " (" + move.name.substring(0, beginIndex - 1) + ") : default stat=" + move.stat);
-                    }
-                    list.add(move);
-                    logger.info("Loaded move: " + moveName + ": default stat=" + move.stat);
-                    //logger.info(moveText);
+                if (builder.isValid()) {
+                    list.add(builder);
                 }
             }
         }
