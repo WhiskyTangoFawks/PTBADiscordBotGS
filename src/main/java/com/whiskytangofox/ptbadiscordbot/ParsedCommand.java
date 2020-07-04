@@ -19,13 +19,7 @@ public class ParsedCommand {
     int statMod = 0;
     boolean doRoll = false;
 
-    String r = System.lineSeparator();
-    String infoText = "**/roll  xdx  +/-Modifier  +Stat  MoveName  adv/dis**" + r +
-            "**xdx** - Dice Notation: the number and size of dice to roll, this tag may be included multiple times to roll different dice. When used multiple times, the adv/dis tags should immediately follow the dice to receive the effect, e.g. roll 2d6 adv 1d4. If no dice notation tags are included in a roll command, the default dice (set in the properties tab of the game spreadsheet) will be rolled."+r+r+
-            "**+/-Modifier** : any integer to be added to the sum of the rolls"+r+r+
-            "**+Stat** : the stat modifier to be used for the roll, the system will get the live value from the spreadsheet (minus any debility penalty)"+r+r+
-            "**MoveName**: if a move name or partial move name is included, the text of that move will be printed along with the roll result. If the move includes a single \"roll +STAT\" in it's text, (where STAT is a stat registered in the properties file), a +Stat tag for that stat is added to the roll command if one is not speicified. If used as a command without \"roll\", it will print the move text (without rolling)"+r+r+
-            "**adv/dis**: roll and additional die, and drop the highest/lowest result";
+
 
     public ParsedCommand(Game game, String author, String command) throws KeyConflictException, IOException, PlayerNotFoundException {
         this.author = author;
@@ -39,6 +33,8 @@ public class ParsedCommand {
         }
     }
 
+
+
     public void splitAndParseCommand(String command) throws KeyConflictException {
         command = command.replaceAll("\\+", " ");
         String[] parameters = command.split("( )|/|(?=-)");
@@ -46,10 +42,11 @@ public class ParsedCommand {
             //Zeroth - check if the command is a roll
             if (i == 0) {
                 if ("info".equalsIgnoreCase(parameters[i])){
-                    move = new MoveWrapper("Help Info", infoText);
+                    move = new MoveWrapper("Help Info", getInfoMessage());
                 }else if ("roll".equalsIgnoreCase(parameters[i])) {
                     doRoll = true;
                 } else if (game.isMove(author, parameters[i])) {
+                   //TODO try extending with next parameter to deal with spaces
                     move = game.getMove(author, parameters[i]);
                 } //TODO else if (dealdamage){
                 //syntax
@@ -124,6 +121,18 @@ public class ParsedCommand {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private String getInfoMessage(){
+        String r = System.lineSeparator();
+        String c = game.sheet_definitions.getProperty("commandchar");
+        String infoText = "**"+c+"roll  xdx  +/-Modifier  +Stat  MoveName  adv/dis**" + r +
+                "**xdx** - Dice Notation: the number and size of dice to roll, this tag may be included multiple times to roll different dice. When used multiple times, the adv/dis tags should immediately follow the dice to receive the effect, e.g. roll 2d6 adv 1d4. If no dice notation tags are included in a roll command, the default dice (set in the properties tab of the game spreadsheet) will be rolled."+r+r+
+                "**+/-Modifier** : any integer to be added to the sum of the rolls"+r+r+
+                "**+Stat** : the stat modifier to be used for the roll, the system will get the live value from the spreadsheet (minus any debility penalty)"+r+r+
+                "**MoveName**: if a move name or partial move name is included, the text of that move will be printed along with the roll result. If the move includes a single \"roll +STAT\" in it's text, (where STAT is a stat registered in the properties file), a +Stat tag for that stat is added to the roll command if one is not specified. If used as a command without \"roll\", it will print the move text (without rolling)"+r+r+
+                "**adv/dis**: roll and additional die, and drop the highest/lowest result";
+        return infoText;
     }
 
 

@@ -51,7 +51,6 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
         } else if (this.prefixMap(k).size() == 1) {
             return this.get(this.prefixMap(k).firstKey());
         } else if (this.prefixMap(k).size() > 1){
-            //TODO - replace with a custom exception
             throw new KeyConflictException("The key matches multiple entries: " + k);
         } else { //(this.prefixMap(k).size() ==0)
             return null;

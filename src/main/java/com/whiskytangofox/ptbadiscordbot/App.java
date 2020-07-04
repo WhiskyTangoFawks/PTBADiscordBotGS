@@ -1,6 +1,5 @@
 package com.whiskytangofox.ptbadiscordbot;
 
-
 import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
