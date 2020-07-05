@@ -18,14 +18,11 @@ public class MoveWrapper {
         this.stat = stat;
     }
 
-    public void modifyMove(MoveWrapper secondaryMove){
-        //TODO - update stat
-        //TODO - append text
-    }
+     public MoveWrapper getModifiedCopy(MoveWrapper secondaryMove){
+        MoveWrapper copy = new MoveWrapper(this.name, this.text,
+                secondaryMove.stat == null ? this.stat : secondaryMove.stat);
 
-    public MoveWrapper getModifiedCopy(MoveWrapper secondaryMove){
-        MoveWrapper copy = new MoveWrapper(this.name, this.text, this.stat);
-        copy.text = copy.text + System.lineSeparator() + System.lineSeparator() + secondaryMove.text;
+        copy.text = copy.text + System.lineSeparator() + secondaryMove.text;
         return copy;
     }
 }

@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
+import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import org.junit.Before;
@@ -38,6 +39,11 @@ public class ParsedCommandTest {
         app = new App();
         app.googleSheetAPI = new GoogleSheetAPI();
         game = new Game(mockChannel, sheetID);
+
+        game.loadProperties();
+        game.storePlayerTab();
+        game.loadBasicMoves("Violence & Recovery Moves!A1:BC27");
+        game.loadDiscordNamesFromStoredPlayerTab();
     }
 
     @Before
@@ -74,9 +80,21 @@ public class ParsedCommandTest {
     }
 
     @Test
+    public void testMultiDice() throws Exception {
+        tester.splitAndParseCommand("roll 1d6  1d8 +2 ");
+        String results = tester.getRollResults(true);
+        logger.info(results);
+        assertEquals(2, tester.mod);
+        assertEquals(1, tester.dice.get(0).num);
+        assertEquals(6, tester.dice.get(0).size);
+        assertEquals(1, tester.dice.get(1).num);
+        assertEquals(8, tester.dice.get(1).size);
+    }
+
+    @Test
     public void testGetRollResult1() throws Exception {
         tester.splitAndParseCommand("roll");
-        String results = tester.getRollResults();
+        String results = tester.getRollResults(true);
         logger.info(results);
         assertTrue(results.contains("[2d6]"));
     }
@@ -84,7 +102,7 @@ public class ParsedCommandTest {
     @Test
     public void testGetRollResult2() throws Exception {
         tester.splitAndParseCommand("roll adv");
-        String results = tester.getRollResults();
+        String results = tester.getRollResults(true);
         logger.info(results);
         assertTrue(results.contains("[3d6]") && results.contains("~~"));
     }
@@ -92,7 +110,7 @@ public class ParsedCommandTest {
     @Test
     public void testGetRollResult3() throws Exception {
         tester.splitAndParseCommand("roll dis");
-        String results = tester.getRollResults();
+        String results = tester.getRollResults(true);
         logger.info(results);
         assertTrue(results.contains("[3d6]") && results.contains("~~"));
     }
@@ -100,7 +118,7 @@ public class ParsedCommandTest {
     @Test
     public void testGetRollResult4() throws Exception {
         tester.splitAndParseCommand("roll 2d6+4");
-        String results = tester.getRollResults();
+        String results = tester.getRollResults(true);
         logger.info(results);
         assertTrue(results.contains("[2d6 +4]"));
     }
@@ -108,7 +126,7 @@ public class ParsedCommandTest {
     @Test
     public void testGetRollResult5() throws Exception {
         tester.splitAndParseCommand("roll 2d6 adv +1d4");
-        String results = tester.getRollResults();
+        String results = tester.getRollResults(true);
         assertTrue(results.contains("[3d6 +1d4]"));
     }
 
@@ -136,19 +154,20 @@ public class ParsedCommandTest {
 
     @Test
     public void splitAndParseCommand4() throws Exception {
-        game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
         tester.splitAndParseCommand("hack");
         assertEquals("Hack and Slash", tester.move.name);
         //assertEquals("STR", tester.stat);
     }
 
     @Test
+    public void splitAndParseCommand4Plus() throws Exception {
+        tester.splitAndParseCommand("hack and slash");
+        assertEquals("Hack and Slash", tester.move.name);
+    }
+
+    @Test
     public void splitAndParseCommand5() throws Exception {
         tester = new ParsedCommand(game, "test1", null);
-        game.loadProperties();
-        game.storePlayerTab();
-        game.loadBasicMoves("Violence & Recovery Moves!A1:BC27");
-        game.loadDiscordNamesFromStoredPlayerTab();
 
         MoveWrapper move = game.getMove("test1", "Hack and Slash");
         assertEquals("Hack and Slash", move.name);
@@ -157,14 +176,13 @@ public class ParsedCommandTest {
         tester.splitAndParseCommand("roll hack +10");
         assertEquals("Hack and Slash", tester.move.name);
 
-        String results = tester.getRollResults();
+        String results = tester.getRollResults(true);
         logger.info(results);
         assertEquals(1, tester.dice.size());
         assertEquals(2, tester.dice.get(0).num);
         assertEquals(6, tester.dice.get(0).size);
         assertEquals("str", tester.stat);
         assertTrue(results.contains("[2d6 +(str)"));
-
     }
 
 

@@ -38,7 +38,12 @@ public class MoveBuilder {
             if (i > 0){
                 moveText.append(System.lineSeparator());
             }
-            moveText.append(builder.get(i));
+            if (i == 0){
+                moveText.append("**" + builder.get(i)+ "**");
+            } else {
+                moveText.append(builder.get(i));
+            }
+
         }
 
         String stat = getRollStatFromText(moveText.toString(), game.getAllStats());

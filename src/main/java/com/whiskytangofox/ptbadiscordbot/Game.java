@@ -50,6 +50,7 @@ public class Game {
     public void OnMessageReceived(MessageReceivedEvent event) {
 
         String msg = event.getMessage().getContentDisplay();
+        String player = event.getAuthor().getName().toLowerCase().replace(" ","");
         try {
             if (msg.startsWith(sheet_definitions.getProperty("commandchar"))) {// /alias string
                 msg = msg.toLowerCase().replace(sheet_definitions.getProperty("commandchar"), "");
@@ -57,7 +58,7 @@ public class Game {
                     reloadGame();
                     sendGameMessage("Game successfully reloaded");
                 } else {
-                    ParsedCommand command = new ParsedCommand(this, event.getAuthor().getName(), msg);
+                    ParsedCommand command = new ParsedCommand(this, player, msg);
                     String response = "";
                     if (command.move != null) {
                         response = response + command.move.text + System.lineSeparator();
@@ -109,6 +110,7 @@ public class Game {
         for (int i = 0; i < numSheetsToLoad; i++) {
             int offset = sheetWidth * i;
             String discordPlayerName = storedPlayerTab.getColumnOffsetValue(nameCell.getCellRef(), offset);
+            discordPlayerName = discordPlayerName.toLowerCase().replace(" ","");
             if (discordPlayerName != null && !discordPlayerName.isBlank() && !discordPlayerName.contains("<type")) {
                 playerOffsets.put(discordPlayerName.toLowerCase(), offset);
                 logger.info("Detected assigned sheet for :" + discordPlayerName + ":");
@@ -184,22 +186,15 @@ public class Game {
 
     }
 
-    public boolean isMove(String author, String string) {
-        try {
-            return getMove(author, string) != null;
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean isMove(String author, String string) throws KeyConflictException {
+        return getMove(author, string) != null;
     }
 
     public MoveWrapper getMove(String player, String key) throws KeyConflictException {
-        try {
-            if (playbookMovesPlayerMap.get(player) != null && playbookMovesPlayerMap.get(player).getClosestMatch(key) != null) {
-                return playbookMovesPlayerMap.get(player).getClosestMatch(key);
-            }
-        } catch (Exception e) {
-            //Catch the missing name exception
+        if (playbookMovesPlayerMap.get(player) != null && playbookMovesPlayerMap.get(player).getClosestMatch(key) != null) {
+            return playbookMovesPlayerMap.get(player).getClosestMatch(key);
         }
+
         return basicMoves.getClosestMatch(key);
     }
 
@@ -227,8 +222,14 @@ public class Game {
         return getColumnOffsetLiveValue(sheet_definitions.getProperty(key), playerOffsets.get(player.toLowerCase()));
     }
 
-    public int getStat(String author, String stat) throws IOException, PlayerNotFoundException {
+    public int getStat(String author, String stat) throws IOException, DiscordBotException {
         String value = getLivePlayerValue(author, "stat_" + stat);
+        Integer intValue = null;
+        try {
+            intValue = Integer.parseInt(value);
+        } catch (NumberFormatException e){
+            throw new MissingValueException("Player: " + author + ", Stat:" + stat+ ", returned Not A Number, please correct your sheet");
+        }
         boolean isDebilitated = Boolean.parseBoolean(getLivePlayerValue(author, "stat_" + stat + "_penalty"));
         int penalty = isDebilitated ? 1 : 0;
         return Integer.parseInt(value) - penalty;

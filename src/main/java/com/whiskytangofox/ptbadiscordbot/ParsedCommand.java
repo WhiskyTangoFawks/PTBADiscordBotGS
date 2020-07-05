@@ -18,17 +18,18 @@ public class ParsedCommand {
     String stat = null;
     int statMod = 0;
     boolean doRoll = false;
+    boolean failMsg = false;
 
 
 
-    public ParsedCommand(Game game, String author, String command) throws KeyConflictException, IOException, PlayerNotFoundException {
+    public ParsedCommand(Game game, String author, String command) throws KeyConflictException, IOException, DiscordBotException {
         this.author = author;
         this.game = game;
 
         if (command != null) { //if command is null, then we are running tests
             splitAndParseCommand(command);
             if (doRoll) {
-                rollResult = getRollResults();
+                rollResult = getRollResults(failMsg);
             }
         }
     }
@@ -49,10 +50,6 @@ public class ParsedCommand {
                    //TODO try extending with next parameter to deal with spaces
                     move = game.getMove(author, parameters[i]);
                 } //TODO else if (dealdamage){
-                //syntax
-                //roll dealdamage 1dx targetplayer pierce2
-                //gets players current health, and armor, does the math, return message is new health
-                //}
                 else {
                     throw new IllegalArgumentException("Unrecognised command " + parameters[i]);
                 }
@@ -72,10 +69,11 @@ public class ParsedCommand {
         }
     }
 
-    public String getRollResults() throws IOException, PlayerNotFoundException {
+    public String getRollResults(Boolean failMsg) throws IOException, DiscordBotException {
             if ((dice.size() == 0)) {
                 //TODO - implement a default_roll property
                 dice.add(new DieWrapper(2, 6));
+                failMsg = true;
             }
             if (move != null && stat == null){
                 stat = move.stat;
@@ -83,7 +81,7 @@ public class ParsedCommand {
             if (stat != null){
                 statMod = game.getStat(author, stat);
             }
-            return Dice.roll(dice, mod, stat, statMod);
+            return Dice.roll(dice, mod, stat, statMod, failMsg);
         }
 
 

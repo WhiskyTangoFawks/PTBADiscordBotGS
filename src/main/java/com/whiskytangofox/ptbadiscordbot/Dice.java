@@ -13,8 +13,8 @@ public class Dice {
     static final Logger logger = LoggerFactory.getLogger(App.class);
     private static final Random random = new Random();
 
-   public static String roll(ArrayList<DieWrapper> dice, int mod, String stat, int statMod){
-       String msg="Rolled";
+   public static String roll(ArrayList<DieWrapper> dice, int mod, String stat, int statMod, boolean failMsg){
+       String msg="*Rolled*";
        ArrayList<Integer> rolls = new ArrayList<Integer>();
 
        for (DieWrapper wrapper : dice) {
@@ -22,12 +22,13 @@ public class Dice {
                wrapper.num++;
            }
        }
-
+       msg = msg + " " + getNotation(dice, mod, stat, statMod) + " :: ";
        for (DieWrapper wrapper : dice) {
-           msg = msg + " " + getNotation(dice, mod, stat, statMod);
+
            for (int i = 0; i < wrapper.num; i++) {
                rolls.add(random.nextInt(wrapper.size) + 1);
-               msg = msg + rolls.get(rolls.size()-1)+ ", ";
+               String emoji = "["+rolls.get( rolls.size()-1)+"]";
+               msg = msg + emoji + ", ";
            }
            if (wrapper.adv || wrapper.dis) {
                msg = dropLowAndStrikeThru(rolls, msg, wrapper.adv, wrapper.dis);
@@ -38,20 +39,20 @@ public class Dice {
        int sum = getSum(rolls) + mod + statMod;
 
        String modSign = statMod < 1 ? "" : "+";
-       if (statMod != 0){
-           msg = msg+ " (" + modSign + statMod +")";
+
+       if (stat != null){
+           msg = msg+ "  +(" + modSign + statMod +")";
        }
 
        modSign = mod < 1 ? "" : "+";
        if (mod != 0){
            msg = msg+ " " + modSign + mod;
        }
-       msg = msg+" = "+sum;
-       //TODO - implement exp message ONLY for rolls with a MOVE
+       msg = msg+"  =  "+sum;
        //TODO - implement property to disable reminder for non-PTBA games
-       /*if (sum < 7){
-           msg = msg + System.lineSeparator() + "Mark EXP on a 6-";
-       }*/
+       if (failMsg && sum < 7){
+           msg = msg + System.lineSeparator() + "*Don't forget to mark EXP on a 6-*";
+       }
        return msg;
     }
 
@@ -65,17 +66,20 @@ public class Dice {
 
     private static String dropLowAndStrikeThru(ArrayList<Integer> rolls, String msg, boolean adv, boolean dis){
         String drop = null;
+        String replacement = null;
         Collections.sort(rolls);
 
         if (adv) {
-            drop = rolls.get(0).toString();
+            drop = "["+rolls.get(0)+"]";
+            replacement = "~~["+ rolls.get(0) + "]~~";
             rolls.remove(0);
         }
         else if (dis) {
-            drop = rolls.get(rolls.size()-1).toString();
+            drop = "["+rolls.get(rolls.size()-1)+"]";
+            replacement = "~~["+ rolls.get(rolls.size()-1) + "]~~";
             rolls.remove(rolls.size()-1);
         }
-         return replaceLast(msg, drop, "~~" + drop + "~~");
+         return replaceLast(msg, drop, replacement);
     }
 
     public static String replaceLast(String string, String toReplace, String replacement) {
@@ -90,19 +94,19 @@ public class Dice {
     }
 
     private static String getNotation(ArrayList<DieWrapper> dice, int mod, String stat, Integer statMod){
-        String msg = "[";
+        String msg = "*{";
         for (DieWrapper die : dice){
-            String spaceOrNot = msg == "[" ? "" : " +";
+            String spaceOrNot = msg == "*{" ? "" : ", ";
             msg=msg + spaceOrNot + die.getNotation();
         }
         if (stat != null) {
-            msg = msg + " +(" + stat+")" ;
+            msg = msg + " +(" + stat+ ")" ;
         }
         if (mod != 0) {
             String modSign = mod < 1 ? "" : "+";
             msg = msg + " " + modSign + mod;
         }
-        msg = msg + "] ";
+        msg = msg + "}* ";
         return msg;
     }
 

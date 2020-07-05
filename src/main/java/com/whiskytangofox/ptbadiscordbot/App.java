@@ -36,7 +36,7 @@ public class App extends ListenerAdapter {
             jda = new JDABuilder(config.getProperty("token"))
                     .addEventListeners(new App())
                     .build();
-            jda.getPresence().setActivity(Activity.playing("Dungeon World"));
+            jda.getPresence().setActivity(Activity.of(Activity.ActivityType.CUSTOM_STATUS, "type !info for help"));
         } catch (Exception e) {
             e.printStackTrace();
         }
