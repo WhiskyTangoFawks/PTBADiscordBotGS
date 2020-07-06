@@ -56,7 +56,7 @@ public class MoveBuilderTest {
     public void testBuild(){
         MoveWrapper move = builder.getMoveForGame(mockGame);
         assertEquals(hack[0], move.name);
-        assertEquals(hack[0]+System.lineSeparator()+hack[1], move.text);
+        assertEquals("**"+hack[0]+"**"+System.lineSeparator()+hack[1], move.text);
         assertEquals("str", move.stat);
     }
 

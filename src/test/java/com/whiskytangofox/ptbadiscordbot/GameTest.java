@@ -3,8 +3,10 @@ package com.whiskytangofox.ptbadiscordbot;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,19 +29,28 @@ public class GameTest {
         App.googleSheetAPI = new GoogleSheetAPI();
     }
 
+    @Before
+    public void doBefore(){
+        MockitoAnnotations.initMocks(this);
+    }
+
     @Test
     public void testOnMessageReceived() {
     }
 
     @Test
     public void testLoadProperties() throws IOException {
-        game.loadProperties();
+        if (game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
         assertEquals("M2", game.sheet_definitions.getProperty("discord_player_name"));
     }
 
     @Test
     public void testLoadPropertiesStats() throws IOException {
-        game.loadProperties();
+        if (game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
         List<String> stats = game.getAllStats();
         assertEquals(stats.size(), 6);
         assertTrue(stats.contains("str"));
@@ -52,16 +63,26 @@ public class GameTest {
 
     @Test
     public void testStorePlayerTab() throws IOException {
-        game.loadProperties();
-        game.storePlayerTab();
+        if (game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
+        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
+            game.storePlayerTab();
+        }
         assertNotNull(game.storedPlayerTab);
     }
 
     @Test
     public void testLoadDiscordNames() throws Exception {
-        game.loadProperties();
-        game.storePlayerTab();
-        game.loadDiscordNamesFromStoredPlayerTab();
+        if (game.sheet_definitions.isEmpty()) {
+            game.loadProperties();
+        }
+        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
+            game.storePlayerTab();
+        }
+        if (game.playerOffsets.isEmpty()){
+            game.loadDiscordNamesFromStoredPlayerTab();
+        }
         assertTrue(game.isPlayerHasSheet("test1"));
         assertTrue(game.isPlayerHasSheet("test2"));
     }
@@ -75,9 +96,15 @@ public class GameTest {
 
     @Test
     public void testLoadPlaybookMoves() throws Exception {
-        game.loadProperties();
-        game.storePlayerTab();
-        game.loadDiscordNamesFromStoredPlayerTab();
+        if (game.sheet_definitions == null || game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
+        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
+            game.storePlayerTab();
+        }
+        if (game.playerOffsets == null || game.playerOffsets.isEmpty()){
+            game.loadDiscordNamesFromStoredPlayerTab();
+        }
         game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
         game.loadPlaybookMovesForPlayer("test", 0);
         assertTrue(game.playbookMovesPlayerMap.containsKey("test"));
@@ -88,9 +115,15 @@ public class GameTest {
 
     @Test
     public void testGetMove() throws Exception {
-        game.loadProperties();
-        game.storePlayerTab();
-        game.loadDiscordNamesFromStoredPlayerTab();
+        if (game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
+        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
+            game.storePlayerTab();
+        }
+        if (game.playerOffsets.isEmpty()){
+            game.loadDiscordNamesFromStoredPlayerTab();
+        }
         game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
         assertNotNull(game.getMove("test", "Aid"));
 
@@ -105,9 +138,15 @@ public class GameTest {
 
     @Test
     public void testGetStat() throws Exception {
-        game.loadProperties();
-        game.storePlayerTab();
-        game.loadDiscordNamesFromStoredPlayerTab();
+        if (game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
+        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
+            game.storePlayerTab();
+        }
+        if (game.playerOffsets.isEmpty()){
+            game.loadDiscordNamesFromStoredPlayerTab();
+        }
         for (Map.Entry<Object, Object> prop : game.sheet_definitions.entrySet()){
             String name = prop.getKey().toString();
             if (name.startsWith("stat_") && !name.contains("penalty")){
@@ -121,9 +160,15 @@ public class GameTest {
 
     @Test
     public void testGetStatWithNoRegisteredSheet() throws IOException {
-        game.loadProperties();
-        game.storePlayerTab();
-        game.loadDiscordNamesFromStoredPlayerTab();
+        if (game.sheet_definitions.isEmpty()){
+            game.loadProperties();
+        }
+        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
+            game.storePlayerTab();
+        }
+        if (game.playerOffsets.isEmpty()){
+            game.loadDiscordNamesFromStoredPlayerTab();
+        }
         Exception ex = null;
         try {
             int stat = game.getStat("NotARealAuthor", "str");

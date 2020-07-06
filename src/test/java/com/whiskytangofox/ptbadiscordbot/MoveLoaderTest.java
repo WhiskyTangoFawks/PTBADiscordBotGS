@@ -1,26 +1,21 @@
 package com.whiskytangofox.ptbadiscordbot;
 
-import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
+import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class MoveLoaderTest {
 
     public static final Logger logger = LoggerFactory.getLogger(MoveLoaderTest.class);
-    static GoogleSheetAPI api;
-    String sheetID = "1zwZlDaLdNDF7vs5Gx_WVFf19-E_IAy6pCNp_guQjMko";
-    String tab = "movetest";
-
 
     private static Boolean isMoveInList(ArrayList<MoveBuilder> moves,String moveName){
         for (MoveBuilder move : moves){
@@ -45,16 +40,50 @@ public class MoveLoaderTest {
         return false;
     }
 
-    @BeforeClass
-    public static void setup() throws IOException, GeneralSecurityException {
-        logger.info("Running @BeforeClass Setup");
-        api = new GoogleSheetAPI();
+    public RangeWrapper getTestData(String rangeDef){
+        HashMap<CellRef, String> set = new HashMap<CellRef, String>();
+        set.put(new CellRef("B2"), "B2");
+        set.put(new CellRef("B3"), "B3 Move Text roll +str");
+        set.put(new CellRef("B5"), "B5");
+        set.put(new CellRef("B6"), "B6 Move Text");
+        set.put(new CellRef("B10"), "B10");
+        set.put(new CellRef("B12"), "B12");
+        set.put(new CellRef("B13"), "B13 move text");
+        set.put(new CellRef("B15"), "TRUE");
+        set.put(new CellRef("B16"), "B16 move text");
+        set.put(new CellRef("B18"), "FALSE");
+        set.put(new CellRef("B19"), "B19 Move Text");
+        set.put(new CellRef("C10"), "C10");
+        set.put(new CellRef("C15"), "C15");
+        set.put(new CellRef("C18"), "C18");
+        set.put(new CellRef("D2"), "D2");
+        set.put(new CellRef("D3"), "TRUE");
+        set.put(new CellRef("D6"), "D6");
+        set.put(new CellRef("D7"), " ");
+        set.put(new CellRef("D8"), " ");
+        set.put(new CellRef("D12"), "D12");
+        set.put(new CellRef("D13"), "D13 move text");
+        set.put(new CellRef("E3"), "E3 Move Text");
+        set.put(new CellRef("E4"), "E4 Should Not Display");
+        set.put(new CellRef("E7"), "E7 Move Text");
+        set.put(new CellRef("E8"), "E8 Move Text");
+        set.put(new CellRef("F3"), "F3 more move text roll +int");
+        set.put(new CellRef("H2"), "H2");
+        set.put(new CellRef("H3"), "H3 Move Text roll +str");
+        set.put(new CellRef("H5"), "H5 (H2)");
+        set.put(new CellRef("H6"), "H6 move text roll +int");
+        set.put(new CellRef("H10"), "H10");
+        set.put(new CellRef("H11"), "H11");
+        set.put(new CellRef("H12"), "H12");
+        set.put(new CellRef("I11"), "I11");
+        set.put(new CellRef("I12"), "I12");
+        return new RangeWrapper(set, new HashMap<CellRef, String>(), rangeDef);
     }
 
     @Test
-    public void testGetValueIntInt() throws Exception {
+    public void testGetValueIntInt() {
         String rangeRef = "A1:F14";
-        RangeWrapper range = api.getRange(sheetID, tab, rangeRef);
+        RangeWrapper range = getTestData(rangeRef);
         ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertFalse(isMoveInList(list, "b10"));
@@ -69,10 +98,9 @@ public class MoveLoaderTest {
     }
 
     @Test
-    public void testLoadMoveSubRangeColumns() throws Exception {
+    public void testLoadMoveSubRangeColumns() {
         String fullTab = "A1:F12";
-        RangeWrapper range = api.getRange(sheetID, tab, fullTab);
-        String subRange = "A1:C7";
+        RangeWrapper range = getTestData(fullTab);
 
         ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
@@ -87,10 +115,9 @@ public class MoveLoaderTest {
     }
 
     @Test
-    public void testLoadMoveOffsetSubRange() throws Exception {
+    public void testLoadMoveOffsetSubRange() {
         String fullTab = "A1:F12";
-        RangeWrapper range = api.getRange(sheetID, tab, fullTab);
-        String subRange = "A1:C10";
+        RangeWrapper range = getTestData(fullTab);
 
         ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
@@ -109,11 +136,9 @@ public class MoveLoaderTest {
     }
 
     @Test
-    public void testLoadMoveSubRangeRows() throws Exception {
+    public void testLoadMoveSubRangeRows() {
         String fullTab = "A1:F14";
-        RangeWrapper range = api.getRange(sheetID, tab, fullTab);
-        String subRange = "A5:F9";
-
+        RangeWrapper range = getTestData(fullTab);
         ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertTrue(isMoveInList(list, "b2"));
@@ -131,9 +156,9 @@ public class MoveLoaderTest {
     }
 
     @Test
-    public void advancedMoveLoadTest() throws Exception {
+    public void advancedMoveLoadTest() {
         String fullTab = "B12:D20";
-        RangeWrapper range = api.getRange(sheetID, tab, fullTab);
+        RangeWrapper range = getTestData(fullTab);
         ArrayList<MoveBuilder> list = MoveLoader.loadMovesFromRange(range);
 
         assertTrue(isMoveInList(list, "c15"));
@@ -142,9 +167,9 @@ public class MoveLoaderTest {
     }
 
     @Test
-    public void testListMoveLoad() throws IOException {
+    public void testListMoveLoad() {
         String playerRef = "G9:J14";
-        RangeWrapper range2 = api.getRange(sheetID, tab, playerRef);
+        RangeWrapper range2 = getTestData(playerRef);
 
         ArrayList<MoveBuilder> secondaryMoves = MoveLoader.loadMovesFromRange(range2);
         assertTrue(isMoveInList(secondaryMoves, "H10", "H12"));
@@ -152,9 +177,5 @@ public class MoveLoaderTest {
         assertFalse(isMoveInList(secondaryMoves, "I11"));
         assertFalse(isMoveInList(secondaryMoves, "I12"));
     }
-
-
-
-
 
 }

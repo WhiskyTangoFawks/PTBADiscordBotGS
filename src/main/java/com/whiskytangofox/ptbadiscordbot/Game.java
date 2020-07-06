@@ -20,7 +20,7 @@ public class Game {
     public Properties sheet_definitions = new Properties();
 
     public final PatriciaTrieIgnoreCase<MoveWrapper> basicMoves = new PatriciaTrieIgnoreCase<MoveWrapper>();
-    private final HashMap<String, Integer> playerOffsets = new HashMap<String, Integer>();
+    public final HashMap<String, Integer> playerOffsets = new HashMap<String, Integer>();
     public final HashMap<String, PatriciaTrieIgnoreCase<MoveWrapper>> playbookMovesPlayerMap = new HashMap<String, PatriciaTrieIgnoreCase<MoveWrapper>>();
 
     private final String sheetID;
@@ -77,7 +77,11 @@ public class Game {
     }
 
     public void sendGameMessage(String msg){
-        channel.sendMessage(msg).queue();
+        if (channel != null) {
+            channel.sendMessage(msg).queue();
+        } else {
+            logger.info("Test result for sendGameMessage: " + msg);
+        }
     }
 
     public void reloadGame() throws IOException, KeyConflictException {
@@ -110,8 +114,8 @@ public class Game {
         for (int i = 0; i < numSheetsToLoad; i++) {
             int offset = sheetWidth * i;
             String discordPlayerName = storedPlayerTab.getColumnOffsetValue(nameCell.getCellRef(), offset);
-            discordPlayerName = discordPlayerName.toLowerCase().replace(" ","");
             if (discordPlayerName != null && !discordPlayerName.isBlank() && !discordPlayerName.contains("<type")) {
+                discordPlayerName = discordPlayerName.toLowerCase().replace(" ","");
                 playerOffsets.put(discordPlayerName.toLowerCase(), offset);
                 logger.info("Detected assigned sheet for :" + discordPlayerName + ":");
             }

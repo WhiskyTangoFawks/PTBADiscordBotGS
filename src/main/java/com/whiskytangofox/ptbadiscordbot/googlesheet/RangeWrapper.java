@@ -6,7 +6,6 @@ import com.whiskytangofox.ptbadiscordbot.App;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 public class RangeWrapper {
 
@@ -15,30 +14,7 @@ public class RangeWrapper {
     public final CellRef firstCell;
     public final CellRef lastCell;
 
-    public RangeWrapper(List<List<Object>> data, String rangeDef) {
-        firstCell = new CellRef(rangeDef.split(":")[0]);
-        lastCell = new CellRef (rangeDef.split(":")[1]);
-        this.values = new HashMap<CellRef, String>();
-        this.notes = new HashMap<CellRef, String>();
-        for (int i = 0; i < lastCell.getColumnInt()-firstCell.getColumnInt()+1; i++){
-            for (int j = 0; j < lastCell.getRow()-firstCell.getRow()+1; j++){
-                int c = i+firstCell.getColumnInt();
-                int r = j+firstCell.getRow();
-                String value = "";
-                try {
-                    value = data.get(j).get(i).toString();
-                } catch (IndexOutOfBoundsException e){
-                     //value = null;
-                } catch (NullPointerException e){
-                    //value = null;
-                }
-                this.values.put(new CellRef(c,r), value);
-                //App.logger.info(c + ", " + r + " : " + range.get(j).get(i).toString());
-            }
-        }
-    }
-
-    public RangeWrapper(GridData data, String rangeDef){
+   public RangeWrapper(GridData data, String rangeDef){
         firstCell = new CellRef(rangeDef.split(":")[0]);
         lastCell = new CellRef (rangeDef.split(":")[1]);
         this.values = new HashMap<CellRef, String>();

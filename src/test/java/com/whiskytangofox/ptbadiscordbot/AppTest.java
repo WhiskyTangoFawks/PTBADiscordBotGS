@@ -27,11 +27,13 @@ public class AppTest {
     @Mock
     static MessageChannel mockChannel;
 
+    @Mock
+    static MessageAction mockMessageAction;
+
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    @Mock
-    static MessageAction mockMessageAction;
+
 
     @BeforeClass
     public static void setupGame() throws Exception {
