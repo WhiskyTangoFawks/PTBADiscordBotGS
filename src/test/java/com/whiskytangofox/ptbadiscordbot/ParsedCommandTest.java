@@ -12,13 +12,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Properties;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -73,9 +76,13 @@ public class ParsedCommandTest {
         when(mockGame.getStat(anyString(), anyString())).thenReturn(1);
 
         MoveWrapper move = builder.getMoveForGame(mockGame);
-        when(mockGame.isMove("test1", "hack")).thenReturn(true);
-        when(mockGame.isMove(anyString(), anyString())).thenReturn(true);
         when(mockGame.getMove(anyString(),anyString())).thenReturn(move);
+
+        when(mockGame.isMove(anyString(), anyString())).thenAnswer(invocation ->
+                        "hackandslash".contains(invocation.getArgument(1, String.class).toLowerCase()));
+
+        mockGame.sheet_definitions = new Properties();
+        mockGame.sheet_definitions.put("default_system_dice", "2d6");
 
         tester = new ParsedCommand(mockGame, "test1", null);
     }
@@ -187,10 +194,31 @@ public class ParsedCommandTest {
     public void splitAndParseCommand4() throws Exception {
         tester.splitAndParseCommand("hack");
         assertEquals(builder.get(0), tester.move.name);
-        //assertEquals("STR", tester.stat);
     }
 
-    //@Test
+    @Test
+    public void testGetMoveArrayPosition() throws KeyConflictException {
+       String[] test1 ={"hack"};
+        String[] test2 ={"hack", "adv"};
+        String[] test3={"hack", "and", "slash"};
+        String[] test4={"hack", "and", "slash", "+2"};
+        assertEquals(0, tester.getMoveArrayPositions("test1", 0, test1));
+        assertEquals(0, tester.getMoveArrayPositions("test1", 0, test2));
+        assertEquals(2, tester.getMoveArrayPositions("test1", 0, test3));
+        assertEquals(2, tester.getMoveArrayPositions("test1", 0, test4));
+
+        String[] test11 ={"bob", "hack"};
+        String[] test21 ={"bob", "hack", "adv"};
+        String[] test31={"bob", "hack", "and", "slash"};
+        String[] test41={"bob", "hack", "and", "slash", "+2"};
+        assertEquals(0, tester.getMoveArrayPositions("test1", 1, test11));
+        assertEquals(0, tester.getMoveArrayPositions("test1", 1, test21));
+        assertEquals(2, tester.getMoveArrayPositions("test1", 1, test31));
+        assertEquals(2, tester.getMoveArrayPositions("test1", 1, test41));
+
+    }
+
+    @Test
     public void splitAndParseCommand4Plus() throws Exception {
         tester.splitAndParseCommand("hack and slash");
         assertEquals("Hack and Slash", tester.move.name);
@@ -216,6 +244,8 @@ public class ParsedCommandTest {
         assertTrue(results.contains("2d6"));
         assertTrue(results.contains("str"));
     }
+
+
 
 
 }

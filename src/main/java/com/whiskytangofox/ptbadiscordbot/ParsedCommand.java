@@ -47,7 +47,8 @@ public class ParsedCommand {
                 }else if ("roll".equalsIgnoreCase(parameters[i])) {
                     doRoll = true;
                 } else if (game.isMove(author, parameters[i])) {
-                   //TODO try extending with next parameter to deal with spaces
+                   //skips the rest of the move name when it is written with spaces
+                    i = i + getMoveArrayPositions(author, i, parameters);
                     move = game.getMove(author, parameters[i]);
                 } //TODO else if (dealdamage){
                 else {
@@ -62,6 +63,7 @@ public class ParsedCommand {
             } else if (isInteger(parameters[i])) {
                 mod = Integer.parseInt(parameters[i]);
             } else if (move == null && game.isMove(author, parameters[i])) {
+                i = i + getMoveArrayPositions(author, i, parameters);
                 move = game.getMove(author, parameters[i]);
             } else if (!parameters[i].isBlank()) {
                 throw new IllegalArgumentException("Unrecognised argument " + parameters[i]);
@@ -71,8 +73,7 @@ public class ParsedCommand {
 
     public String getRollResults(Boolean failMsg) throws IOException, DiscordBotException {
             if ((dice.size() == 0)) {
-                //TODO - implement a default_roll property
-                dice.add(new DieWrapper(2, 6));
+                parseDieNotation(game.sheet_definitions.getProperty("default_system_dice"));
                 failMsg = true;
             }
             if (move != null && stat == null){
@@ -131,6 +132,18 @@ public class ParsedCommand {
                 "**MoveName**: if a move name or partial move name is included, the text of that move will be printed along with the roll result. If the move includes a single \"roll +STAT\" in it's text, (where STAT is a stat registered in the properties file), a +Stat tag for that stat is added to the roll command if one is not specified. If used as a command without \"roll\", it will print the move text (without rolling)"+r+r+
                 "**adv/dis**: roll and additional die, and drop the highest/lowest result";
         return infoText;
+    }
+
+    public int getMoveArrayPositions(String player, int startPos, String[] parameters) throws KeyConflictException {
+        StringBuffer buffer = new StringBuffer();
+        for(int i = startPos;i < parameters.length; i++){
+            buffer.append(parameters[i]);
+            if (!game.isMove(player, buffer.toString())){
+                return i-1-startPos;
+            }
+        }
+        return parameters.length-1-startPos;
+
     }
 
 

@@ -236,7 +236,7 @@ public class Game {
         }
         boolean isDebilitated = Boolean.parseBoolean(getLivePlayerValue(author, "stat_" + stat + "_penalty"));
         int penalty = isDebilitated ? 1 : 0;
-        return Integer.parseInt(value) - penalty;
+        return intValue - penalty;
     }
 
     public List<String> getAllStats(){
