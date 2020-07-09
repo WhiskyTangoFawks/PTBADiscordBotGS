@@ -1,5 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.wrappers.DieWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
@@ -50,7 +51,7 @@ public class ParsedCommand {
                    //skips the rest of the move name when it is written with spaces
                     i = i + getMoveArrayPositions(author, i, parameters);
                     move = game.getMove(author, parameters[i]);
-                } //TODO else if (dealdamage){
+                }
                 else {
                     throw new IllegalArgumentException("Unrecognised command " + parameters[i]);
                 }
@@ -73,8 +74,7 @@ public class ParsedCommand {
 
     public String getRollResults(Boolean failMsg) throws IOException, DiscordBotException {
             if ((dice.size() == 0)) {
-                parseDieNotation(game.sheet_definitions.getProperty("default_system_dice"));
-                failMsg = true;
+                setDefaultDice();
             }
             if (move != null && stat == null){
                 stat = move.stat;
@@ -88,6 +88,17 @@ public class ParsedCommand {
 
     boolean isDieNotation(String stringToCheck){
         return stringToCheck.matches(".*\\dd\\d.*");
+    }
+
+    public void setDefaultDice() throws IOException, PlayerNotFoundException {
+        if (move != null && game.sheet_definitions.getProperty("default_"+move.getReferenceMoveName()+"_dice")!= null){
+            String cell = game.sheet_definitions.getProperty("default_"+move.getReferenceMoveName()+"_dice");
+            String diceNotation = game.getLivePlayerValue(author, cell);
+            parseDieNotation(diceNotation);
+        } else {
+            parseDieNotation(game.sheet_definitions.getProperty("default_system_dice"));
+            failMsg = true;
+        }
     }
 
     public void parseDieNotation(String token) {

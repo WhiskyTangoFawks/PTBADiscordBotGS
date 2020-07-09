@@ -2,7 +2,6 @@ package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,12 +62,4 @@ public class MoveLoader {
         return list;
     }
 
-    private static MoveWrapper getMoveFromList(String moveName, ArrayList<MoveWrapper> moves){
-        for (MoveWrapper move : moves){
-            if (moveName.equalsIgnoreCase(move.name)){
-                return move;
-            }
-        }
-        return null;
-    }
 }

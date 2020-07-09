@@ -9,7 +9,7 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
 
     @Override
     public E put(@NotNull String key, E value) {
-        /*
+        /*TODO - error on add close key
         String checkKey = key.length() > 4 ? key.substring(0, 4) : key;
         if (!prefixMap(checkKey).isEmpty()){
             StringBuffer conflict = new StringBuffer();
@@ -51,6 +51,9 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
         } else if (this.prefixMap(k).size() > 1){
             throw new KeyConflictException("The key matches multiple entries: " + k);
         } else { //(this.prefixMap(k).size() ==0)
+            //TODO - try getting all keys which contain the exact message
+            //Test: damage should return Deal Damage, Slash should return Hack and Slash
+            //ToDo - spelling mistakes?
             return null;
         }
     }

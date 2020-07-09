@@ -83,6 +83,9 @@ public class ParsedCommandTest {
 
         mockGame.sheet_definitions = new Properties();
         mockGame.sheet_definitions.put("default_system_dice", "2d6");
+        mockGame.sheet_definitions.put("default_dealdamage_dice", "C51");
+
+        when(mockGame.getLivePlayerValue("test1", "C51")).thenReturn("1d8");
 
         tester = new ParsedCommand(mockGame, "test1", null);
     }
@@ -245,7 +248,19 @@ public class ParsedCommandTest {
         assertTrue(results.contains("str"));
     }
 
+    @Test
+    public void testSetDefaultDice() throws IOException, DiscordBotException, KeyConflictException {
+        tester.move = new MoveWrapper("Deal Damage", "Test deal damage text");
+        tester.setDefaultDice();
+        assertEquals(1, tester.dice.get(0).num);
+        assertEquals(8, tester.dice.get(0).size);
+    }
 
-
+    @Test
+    public void testResultWithDealDamageOverrideDice() throws IOException, DiscordBotException {
+        tester.move = new MoveWrapper("Deal Damage", "Test deal damage text");
+        String result = tester.getRollResults(false);
+        assertTrue(result.contains( "1d8"));
+    }
 
 }

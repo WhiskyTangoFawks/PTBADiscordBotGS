@@ -227,6 +227,7 @@ public class Game {
     }
 
     public int getStat(String author, String stat) throws IOException, DiscordBotException {
+        //TODO- use either getBatch or getArea to make a single call instead of 2
         String value = getLivePlayerValue(author, "stat_" + stat);
         Integer intValue = null;
         try {
@@ -248,8 +249,20 @@ public class Game {
                 .collect(Collectors.toList());
     }
 
+    public List<String> getAllSheetDefType(String prefix){
+        return sheet_definitions.keySet().stream()
+                .map(prop -> prop.toString())
+                .filter(prop -> prop.startsWith(prefix))
+                .map(prop -> prop.substring(prefix.length()))
+                .collect(Collectors.toList());
+    }
+
     public boolean isStat(String string) {
         return sheet_definitions.getProperty("stat_" + string) != null;
+    }
+
+    public void setValue(String cellRef, String value){
+        //TODO
     }
 
 

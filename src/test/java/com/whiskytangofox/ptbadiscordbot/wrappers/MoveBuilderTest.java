@@ -65,4 +65,6 @@ public class MoveBuilderTest {
         String result = builder.getRollStatFromText(builder.get(1), Arrays.asList(stats));
         assertEquals(result, "str");
     }
+
+
 }

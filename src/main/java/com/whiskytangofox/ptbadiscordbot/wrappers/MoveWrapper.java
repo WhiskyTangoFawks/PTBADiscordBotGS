@@ -25,4 +25,8 @@ public class MoveWrapper {
         copy.text = copy.text + System.lineSeparator() + secondaryMove.text;
         return copy;
     }
+
+    public String getReferenceMoveName(){
+        return this.name.toLowerCase().replace(" ", "");
+    }
 }
