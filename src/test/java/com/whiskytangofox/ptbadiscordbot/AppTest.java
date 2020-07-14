@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 
 public class AppTest {
 
-    public static final Logger logger = LoggerFactory.getLogger(MoveLoaderTest.class);
+    public static final Logger logger = LoggerFactory.getLogger(AppTest.class);
     static App app;
 
     @Mock
@@ -32,8 +32,6 @@ public class AppTest {
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-
 
     @BeforeClass
     public static void setupGame() throws Exception {

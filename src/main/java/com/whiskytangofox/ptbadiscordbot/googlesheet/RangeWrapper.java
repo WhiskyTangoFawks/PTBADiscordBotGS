@@ -13,9 +13,11 @@ public class RangeWrapper {
     private final HashMap<CellRef, String> notes;
     public final CellRef firstCell;
     public final CellRef lastCell;
+    public final String tab;
 
-   public RangeWrapper(GridData data, String rangeDef){
-        firstCell = new CellRef(rangeDef.split(":")[0]);
+   public RangeWrapper(GridData data, String tab, String rangeDef){
+       this.tab = tab;
+       firstCell = new CellRef(rangeDef.split(":")[0]);
         lastCell = new CellRef (rangeDef.split(":")[1]);
         this.values = new HashMap<CellRef, String>();
         this.notes = new HashMap<CellRef, String>();
@@ -39,9 +41,10 @@ public class RangeWrapper {
         }
     }
 
-    public RangeWrapper(HashMap<CellRef, String> dataValues,HashMap<CellRef, String> dataNotes, String rangeDef) {
+    public RangeWrapper(HashMap<CellRef, String> dataValues,HashMap<CellRef, String> dataNotes, String tab, String rangeDef) {
         firstCell = new CellRef(rangeDef.split(":")[0]);
         lastCell = new CellRef (rangeDef.split(":")[1]);
+        this.tab = tab;
         this.notes = dataNotes;
         this.values = dataValues;
     }
@@ -57,14 +60,10 @@ public class RangeWrapper {
         CellRef subrangeLast = new CellRef (subrangeAnchor.split(":")[1]);
         firstCell = new CellRef(subrangeFirst.getColumnInt()+offset, subrangeFirst.getRow());
         lastCell = new CellRef(subrangeLast.getColumnInt()+offset, subrangeLast.getRow());
+        this.tab = parent.tab;
         this.notes = parent.notes;
         this.values = parent.values;
     }
-
-    public RangeWrapper getSubRange(String subrange){
-        return new RangeWrapper(values, notes, subrange);
-    }
-
 
     public String getValue(int sheetColumn, int sheetRow){
         try {
@@ -94,8 +93,6 @@ public class RangeWrapper {
         }
     }
 
-
-
     public String getValue(String cellRef){
         CellRef cell = new CellRef(cellRef);
         return getValue(cell.getColumnInt(), cell.getRow());
@@ -104,15 +101,6 @@ public class RangeWrapper {
     public String getNote(String cellRef){
         CellRef cell = new CellRef(cellRef);
         return getNote(cell.getColumnInt(), cell.getRow());
-    }
-
-    public String getColumnOffsetValue(String cell, int columnOffset){
-        CellRef cellref = new CellRef(cell);
-        return getValue(cellref.getColumnInt()+columnOffset, cellref.getRow());
-    }
-    public String getColumnOffsetNote(String cell, int columnOffset){
-        CellRef cellref = new CellRef(cell);
-        return getNote(cellref.getColumnInt()+columnOffset, cellref.getRow());
     }
 
     public Collection<String> getValueSet(){

@@ -2,6 +2,7 @@ package com.whiskytangofox.ptbadiscordbot.googlesheet;
 
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.*;
+import com.whiskytangofox.ptbadiscordbot.App;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,12 +21,18 @@ public class GoogleSheetAPITest {
     String range = tab+"!"+"A1:B6";
 
 
-    @Test
-    public void testGetData() throws IOException, GeneralSecurityException {
-
-
-
+    //@Test
+    public void devSpike_Write() throws IOException, GeneralSecurityException {
+        GoogleSheetAPI api = new GoogleSheetAPI();
+        String string = api.getCellValue(sheetID, "PCs", "C52");
+        App.logger.info(string);
     }
 
+
+    //@Test
+    public void devSpike_GetWholeSheet() throws IOException, GeneralSecurityException {
+        GoogleSheetAPI api = new GoogleSheetAPI();
+        api.getSheet(sheetID);
+    }
 
 }

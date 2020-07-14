@@ -1,12 +1,9 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
-import com.whiskytangofox.ptbadiscordbot.Game;
-
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 public class MoveBuilder {
-
 
     private ArrayList<String> builder = new ArrayList<String>();
 
@@ -32,7 +29,7 @@ public class MoveBuilder {
                     !builder.get(1).isBlank();
     }
 
-    public MoveWrapper getMoveForGame(Game game){
+    public MoveWrapper getMove(){
         StringBuffer moveText = new StringBuffer();
         for (int i = 0; i < builder.size(); i++){
             if (i > 0){
@@ -46,16 +43,8 @@ public class MoveBuilder {
 
         }
 
-        String stat = getRollStatFromText(moveText.toString(), game.getAllStats());
-        MoveWrapper move = new MoveWrapper(builder.get(0), moveText.toString(), stat);
+        MoveWrapper move = new MoveWrapper(builder.get(0), moveText.toString());
         return move;
-    }
-
-    public void addNote(String note){
-        if (note != null && !note.isBlank()){
-            //TODO implement a list parser when I have more uses for metadata
-
-        }
     }
 
     public Collection<String> getModifiesMoves(){
@@ -68,26 +57,6 @@ public class MoveBuilder {
             }
         }
         return set;
-    }
-
-    public int lastIndex(){
-        return this.builder.size()-1;
-    }
-
-    public List<String> getContainedInText(String text, String prefix, String... var){
-        final String preparedText = text.toLowerCase().replace(" ", "");
-        final String preparedPrefix = prefix.toLowerCase().replace(" ", "");
-        return Arrays.stream(var).map(v -> v.toLowerCase().replace(" ", ""))
-                .filter(v -> preparedText.contains(preparedPrefix+v))
-                .collect(Collectors.toList());
-    }
-
-    public String getRollStatFromText(String text, Collection<String> gameStats){
-        List<String> list = getContainedInText(text, "roll+", gameStats.toArray(new String[gameStats.size()]));
-        if(list.size() == 1){
-            return list.get(0);
-        }
-        return null;
     }
 
 }

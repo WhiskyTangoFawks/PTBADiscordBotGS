@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
 import com.whiskytangofox.ptbadiscordbot.Game;
+import com.whiskytangofox.ptbadiscordbot.PlayerNotFoundException;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -43,9 +44,9 @@ public class MoveBuilderTest {
     }
 
     @Before
-    public void setupMocks(){
+    public void setupMocks() throws PlayerNotFoundException {
         MockitoAnnotations.initMocks(this);
-        when(mockGame.getAllStats()).thenReturn(Arrays.asList(stats));
+        when(mockGame.getStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
     }
 
     @Test
@@ -54,17 +55,11 @@ public class MoveBuilderTest {
 
     @Test
     public void testBuild(){
-        MoveWrapper move = builder.getMoveForGame(mockGame);
+        MoveWrapper move = builder.getMove();
         assertEquals(hack[0], move.name);
         assertEquals("**"+hack[0]+"**"+System.lineSeparator()+hack[1], move.text);
-        assertEquals("str", move.stat);
     }
 
-    @Test
-    public void testGetRollStatFromText() {
-        String result = builder.getRollStatFromText(builder.get(1), Arrays.asList(stats));
-        assertEquals(result, "str");
-    }
 
 
 }

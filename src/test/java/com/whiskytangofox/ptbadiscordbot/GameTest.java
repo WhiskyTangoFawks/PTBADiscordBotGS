@@ -1,181 +1,165 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
+import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
+import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 public class GameTest {
 
     static Game game;
     public static final Logger logger = LoggerFactory.getLogger(GameTest.class);
 
+    static MoveBuilder basicBuilder;
+    static MoveBuilder advancedBuilder;
+
+    @Mock
+    static GoogleSheetAPI mockApi;
 
     @BeforeClass
-    public static void setupGame() throws Exception {
+    public static void beforeClass(){
         logger.info("Running @BeforeClass Setup");
-        game = new Game(null, "1RR95L3cZUSJczoyHuevsZ8KFPNfOcNVQKcUKLJlvz5I");
-        App.googleSheetAPI = new GoogleSheetAPI();
+
+        basicBuilder = new MoveBuilder();
+        basicBuilder.addLine();
+        basicBuilder.set(0, "Basic Move");
+        basicBuilder.addLine();
+        basicBuilder.set(1, "basic move text roll +STR:");
+
+        advancedBuilder = new MoveBuilder();
+        advancedBuilder.addLine();
+        advancedBuilder.set(0, "Advanced Move (Basic Move)");
+        advancedBuilder.addLine();
+        advancedBuilder.set(1, "advanced move text roll +INT:");
     }
 
     @Before
-    public void doBefore(){
+    public void setupGame() throws Exception {
+        game = new Game(null, null);
+        MockitoAnnotations.initMocks(this);
+        App.googleSheetAPI = mockApi;
+    }
+
+    @Before
+    public void before(){
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    public void testOnMessageReceived() {
+    public void testIsMove() throws KeyConflictException {
+        MoveWrapper move = basicBuilder.getMove();
+        game.basicMoves.put(move.name, move);
+        assertTrue(game.isMove("test", move.name));
     }
 
     @Test
-    public void testLoadProperties() throws IOException {
-        if (game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        assertEquals("M2", game.sheet_definitions.getProperty("discord_player_name"));
+    public void testIsMoveFalse() throws KeyConflictException {
+        MoveWrapper move = basicBuilder.getMove();
+        game.basicMoves.put(move.name, move);
+        assertFalse(game.isMove("test", "not a move"));
     }
 
     @Test
-    public void testLoadPropertiesStats() throws IOException {
-        if (game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        List<String> stats = game.getAllStats();
-        assertEquals(stats.size(), 6);
-        assertTrue(stats.contains("str"));
-        assertTrue(stats.contains("dex"));
-        assertTrue(stats.contains("con"));
-        assertTrue(stats.contains("int"));
-        assertTrue(stats.contains("wis"));
-        assertTrue(stats.contains("cha"));
+    public void testIsMovePlaybookMove() throws KeyConflictException {
+        MoveWrapper move = basicBuilder.getMove();
+        Playbook book = new Playbook(null);
+        book.player = "test";
+        book.moves.put(move.name, move);
+        game.playbooks.put("test", book);
+        assertTrue(game.isMove("test", move.name));
     }
 
     @Test
-    public void testStorePlayerTab() throws IOException {
-        if (game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
-            game.storePlayerTab();
-        }
-        assertNotNull(game.storedPlayerTab);
+    public void testGetMoveBasic() throws KeyConflictException {
+        MoveWrapper move = basicBuilder.getMove();
+        game.basicMoves.put(move.name, move);
+        assertNotNull(game.getMove("test", move.name));
     }
 
     @Test
-    public void testLoadDiscordNames() throws Exception {
-        if (game.sheet_definitions.isEmpty()) {
-            game.loadProperties();
-        }
-        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
-            game.storePlayerTab();
-        }
-        if (game.playerOffsets.isEmpty()){
-            game.loadDiscordNamesFromStoredPlayerTab();
-        }
-        assertTrue(game.isPlayerHasSheet("test1"));
-        assertTrue(game.isPlayerHasSheet("test2"));
+    public void testGetMovePlaybook() throws KeyConflictException {
+        MoveWrapper move = basicBuilder.getMove();
+        Playbook book = new Playbook(null);
+        book.player = "test";
+        book.moves.put(move.name, move);
+        game.playbooks.put("test", book);
+        assertNotNull(game.getMove("test", move.name));
     }
 
     @Test
-    public void testLoadBasicMoves() throws IOException {
-        game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
-        assertTrue(game.basicMoves.containsKey("Aid"));
-        assertTrue(game.basicMoves.containsKey("Defy Danger"));
+    public void testGetMovePlaybookOverrideBasic() throws KeyConflictException {
+        MoveWrapper basic = basicBuilder.getMove();
+        basic.text = "Basic Move Text";
+        game.basicMoves.put(basic.name, basic);
+
+        MoveWrapper override = basicBuilder.getMove();
+        override.text = "override move text";
+        Playbook book = new Playbook(null);
+        book.player = "test";
+        book.moves.put(basic.name, override);
+        game.playbooks.put("test", book);
+        assertEquals("override move text", game.getMove("test", basic.getReferenceMoveName()).text);
     }
 
     @Test
-    public void testLoadPlaybookMoves() throws Exception {
-        if (game.sheet_definitions == null || game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
-            game.storePlayerTab();
-        }
-        if (game.playerOffsets == null || game.playerOffsets.isEmpty()){
-            game.loadDiscordNamesFromStoredPlayerTab();
-        }
-        game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
-        game.loadPlaybookMovesForPlayer("test", 0);
-        assertTrue(game.playbookMovesPlayerMap.containsKey("test"));
-        PatriciaTrieIgnoreCase<MoveWrapper> testMoves = game.playbookMovesPlayerMap.get("test");
-        assertTrue(testMoves.containsKey("Armored"));
-        assertTrue(testMoves.containsKey("Last Breath"));
+    public void testIsStat() throws PlayerNotFoundException {
+        Playbook book = new Playbook("test");
+        book.player = "test";
+        book.stats.put("str", new CellRef("A1"));
+        book.stat_penalties.put("str", new CellRef("A2"));
+        game.playbooks.put("test", book);
+        assertTrue(game.isStat("test", "str"));
+        assertTrue(game.isStat("test", "STR"));
+        assertFalse(game.isStat("test", "blood"));
     }
 
     @Test
-    public void testGetMove() throws Exception {
-        if (game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
-            game.storePlayerTab();
-        }
-        if (game.playerOffsets.isEmpty()){
-            game.loadDiscordNamesFromStoredPlayerTab();
-        }
-        game.loadBasicMoves("Basic Moves!B2:AJ34,Violence & Recovery Moves!A1:BC27");
-        assertNotNull(game.getMove("test", "Aid"));
-
-        game.loadPlaybookMovesForPlayer("test", 0);
-        assertNotNull(game.getMove("test", "Aid"));
-        assertNotNull(game.getMove("test", "Armored"));
-        assertTrue(game.getMove("test", "Last Breath").text.contains("Hard to Kill"));
-        assertTrue(game.getMove("test", "Parley").text.contains("Intimidating"));
-        assertTrue(game.getMove("test", "Defy Danger").text.contains("Intimidating"));
-
+    public void testGetStat() throws IOException, DiscordBotException {
+        Playbook book = new Playbook("test");
+        book.player = "test";
+        book.stats.put("str", new CellRef("A1"));
+        book.stat_penalties.put("str", new CellRef("A2"));
+        game.playbooks.put("test", book);
+        when(App.googleSheetAPI.getCellValue(null, "test", "A1")).thenReturn("+2");
+        when(App.googleSheetAPI.getCellValue(null, "test", "A2")).thenReturn("FALSE");
+        assertEquals(2, game.getStat("test", "str"));
     }
 
     @Test
-    public void testGetStat() throws Exception {
-        if (game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
-            game.storePlayerTab();
-        }
-        if (game.playerOffsets.isEmpty()){
-            game.loadDiscordNamesFromStoredPlayerTab();
-        }
-        for (Map.Entry<Object, Object> prop : game.sheet_definitions.entrySet()){
-            String name = prop.getKey().toString();
-            if (name.startsWith("stat_") && !name.contains("penalty")){
-                name = name.replace("stat_", "");
-                int stat = game.getStat("test1", name);
-                logger.info(name + "=" + stat);
-
-            }
-        }
+    public void testGetPlaybook() throws PlayerNotFoundException {
+        game.playbooks.put("test1", new Playbook(null));
+        assertTrue(game.playbooks.containsKey("test1"));
+        assertTrue(game.getPlaybook("test1") != null);
     }
 
     @Test
-    public void testGetStatWithNoRegisteredSheet() throws IOException {
-        if (game.sheet_definitions.isEmpty()){
-            game.loadProperties();
-        }
-        if (game.storedPlayerTab == null || game.storedPlayerTab.getValueSet().isEmpty()) {
-            game.storePlayerTab();
-        }
-        if (game.playerOffsets.isEmpty()){
-            game.loadDiscordNamesFromStoredPlayerTab();
-        }
-        Exception ex = null;
+    public void testGetPlaybookException() {
+        game.playbooks.put("test1", new Playbook(null));
+        assertTrue(game.playbooks.containsKey("test1"));
+        boolean thrown = false;
         try {
-            int stat = game.getStat("NotARealAuthor", "str");
-        } catch (Exception e){
-            ex = e;
+            game.getPlaybook("test2");
+        } catch (PlayerNotFoundException e) {
+            thrown = true;
         }
-        assertTrue(ex instanceof PlayerNotFoundException);
+        assertTrue(thrown);
     }
+
+
 
 }

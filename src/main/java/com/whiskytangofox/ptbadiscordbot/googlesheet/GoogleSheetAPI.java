@@ -12,8 +12,9 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
-import com.google.api.services.sheets.v4.model.GridData;
-import com.google.api.services.sheets.v4.model.Spreadsheet;
+import com.google.api.services.sheets.v4.model.*;
+import com.whiskytangofox.ptbadiscordbot.App;
+import org.w3c.dom.ranges.Range;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class GoogleSheetAPI {
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
-    private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
+    private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
     /**
@@ -74,34 +76,35 @@ public class GoogleSheetAPI {
                 .build();
     }
 
-    /**
-     *
-     * @param sheetId
-     * @param tab
-     * @param cell
-     * @return
-     * @throws IOException
-     */
+    public ArrayList<RangeWrapper> getSheet(String sheetID) throws IOException {
+        Spreadsheet spreadsheet = service.spreadsheets().get(sheetID).setIncludeGridData(true).execute();
+        ArrayList<RangeWrapper> list = new ArrayList<>();
+        for (Sheet sheet : spreadsheet.getSheets()){
+            if (sheet != null) {
+                for (GridData data : sheet.getData()) {
+                    int columns = sheet.getProperties().getGridProperties().getColumnCount();
+                    int rows = sheet.getProperties().getGridProperties().getRowCount();
+                    CellRef ref = new CellRef(columns, rows);
+                    list.add(new RangeWrapper(data, sheet.getProperties().getTitle(), "A1:"+ref.getCellRef()));
+                }
+            }
+        }
+        return list;
+    }
+
     public String getCellValue(String sheetId, String tab, String cell) throws IOException {
         String range = cell + ":" + cell;
         try {
-            return getData(sheetId, tab, range).getRowData().get(0).getValues().get(0).getFormattedValue();
+            CellData value = getData(sheetId, tab, range).getRowData().get(0).getValues().get(0);
+            return value.getFormattedValue() == null ? value.getNote() : value.getFormattedValue();
         } catch (NullPointerException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    /**
-     *
-     * @param sheetID
-     * @param tab
-     * @param range
-     * @return
-     * @throws IOException
-     */
     public RangeWrapper getRange(String sheetID, String tab, String range) throws IOException {
-        return new RangeWrapper(getData( sheetID, tab, range), range);
+        return new RangeWrapper(getData( sheetID, tab, range),tab, range);
     }
 
     private GridData getData(String sheetID, String tab, String range) throws IOException {
@@ -113,6 +116,17 @@ public class GoogleSheetAPI {
         request.setFields("sheets/data/rowData/values/formattedValue,sheets/data/rowData/values/note");
         Spreadsheet response = request.execute();
         return response.getSheets().get(0).getData().get(0);
+    }
+
+    public void setValue(String sheetID, String tab, String cell, String value) throws IOException {
+        String range = tab+"!"+cell+":"+cell;
+        List<List<Object>> values = Arrays.asList(Arrays.asList(value));
+        ValueRange body = new ValueRange().setValues(values);
+        UpdateValuesResponse result =
+                service.spreadsheets().values().update(sheetID, range, body)
+                        .setValueInputOption("RAW")
+                        .execute();
+        System.out.printf("%d cells updated.", result.getUpdatedCells());
     }
 
 }

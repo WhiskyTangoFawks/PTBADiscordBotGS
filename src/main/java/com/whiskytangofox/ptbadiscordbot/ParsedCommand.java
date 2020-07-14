@@ -1,9 +1,9 @@
 package com.whiskytangofox.ptbadiscordbot;
 
-import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.wrappers.DieWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
+import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,11 +37,14 @@ public class ParsedCommand {
 
 
 
-    public void splitAndParseCommand(String command) throws KeyConflictException {
+    public void splitAndParseCommand(String command) throws KeyConflictException, IOException, PlayerNotFoundException {
         command = command.replaceAll("\\+", " ");
         String[] parameters = command.split("( )|/|(?=-)");
         for (int i = 0; i < parameters.length; i++) {
             //Zeroth - check if the command is a roll
+            if (parameters[i].isBlank()){
+                continue;
+            }
             if (i == 0) {
                 if ("info".equalsIgnoreCase(parameters[i])){
                     move = new MoveWrapper("Help Info", getInfoMessage());
@@ -59,7 +62,7 @@ public class ParsedCommand {
                 parseAdvDis(parameters[i]);
             } else if (isDieNotation(parameters[i])){
                 parseDieNotation(parameters[i]);
-            } else if (game.isStat(parameters[i])) {
+            } else if (game.isStat(author, parameters[i])) {
                 stat = parameters[i];
             } else if (isInteger(parameters[i])) {
                 mod = Integer.parseInt(parameters[i]);
@@ -77,7 +80,7 @@ public class ParsedCommand {
                 setDefaultDice();
             }
             if (move != null && stat == null){
-                stat = move.stat;
+                stat = move.getMoveStat(game.getStatsForPlayer(author));
             } //NOT IF
             if (stat != null){
                 statMod = game.getStat(author, stat);
@@ -86,15 +89,14 @@ public class ParsedCommand {
         }
 
 
-    boolean isDieNotation(String stringToCheck){
+    public static boolean isDieNotation(String stringToCheck){
         return stringToCheck.matches(".*\\dd\\d.*");
     }
 
     public void setDefaultDice() throws IOException, PlayerNotFoundException {
-        if (move != null && game.sheet_definitions.getProperty("default_"+move.getReferenceMoveName()+"_dice")!= null){
-            String cell = game.sheet_definitions.getProperty("default_"+move.getReferenceMoveName()+"_dice");
-            String diceNotation = game.getLivePlayerValue(author, cell);
-            parseDieNotation(diceNotation);
+        Playbook book = game.getPlaybook(author);
+        if (move != null && book != null && book.moveOverrideDice.containsKey(move.name)){
+            parseDieNotation(book.moveOverrideDice.get(move.name));
         } else {
             parseDieNotation(game.sheet_definitions.getProperty("default_system_dice"));
             failMsg = true;
@@ -113,9 +115,9 @@ public class ParsedCommand {
         }
     }
 
-    public void parseAdvDis(String token) {
+    public void parseAdvDis(String token) throws IOException, PlayerNotFoundException {
         if (dice.size() == 0) { //if dis/adv specified before dice size, then setup default
-            dice.add(new DieWrapper(2, 6));
+            setDefaultDice();
         }
         if (token.contains("dis")) {
             dice.get(dice.size() - 1).dis = true;

@@ -59,16 +59,7 @@ public class RangeWrapperTest {
         assertEquals("AA90", range.getValue("AA90").toUpperCase());
     }
 
-    @Test
-    public void testGetColumnOffsetValue() throws IOException {
-        RangeWrapper range = api.getRange(sheetID, "test", "A1:AC100");
-
-        assertEquals("C2", range.getColumnOffsetValue("A2", 2).toUpperCase());
-        assertEquals("L10", range.getColumnOffsetValue("B10", 10).toUpperCase());
-        assertEquals("AA90", range.getColumnOffsetValue("Z90", 1).toUpperCase());
-    }
-
-    @Test
+       @Test
     public void testGetValuesAfterSubrange() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AC100");
         RangeWrapper subRange = new RangeWrapper(range, "B10:V90",0);
@@ -105,7 +96,6 @@ public class RangeWrapperTest {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AA100");
         assertEquals("notea1", range.getNote("A1"));
         assertEquals("noteb3", range.getNote(2, 3));
-        assertEquals("noteb3", range.getColumnOffsetNote("A3", 1));
     }
 
 }

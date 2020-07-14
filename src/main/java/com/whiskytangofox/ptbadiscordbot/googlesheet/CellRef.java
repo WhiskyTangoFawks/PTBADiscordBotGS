@@ -14,6 +14,10 @@ public class CellRef {
     private static final HashMap<String, Integer> colToInt = new HashMap<String, Integer>();
 
     public CellRef(String cellRef){
+        if (intToCol.isEmpty() || colToInt.isEmpty()){
+            setupHashMaps();
+        }
+        cellRef = cellRef.toUpperCase();
         if (cellRef.contains("!")){
             cellRef = cellRef.split("!")[1];
         }
@@ -21,15 +25,15 @@ public class CellRef {
             App.logger.warn("CellRef instantiated with a range instead of a single cell reference, dropping 2nd coordinate");
             cellRef = cellRef.split(":")[0];
         }
-        if (intToCol.isEmpty() || colToInt.isEmpty()){
-            setupHashMaps();
-        }
         int firstDigit = getFirstDigit(cellRef);
         column = colToInt.get(cellRef.substring(0,firstDigit));
         row = Integer.parseInt(cellRef.substring(firstDigit));
     }
 
     public CellRef(int column, int row){
+        if (intToCol.isEmpty() || colToInt.isEmpty()){
+            setupHashMaps();
+        }
         this.column = column;
         this.row = row;
     }
