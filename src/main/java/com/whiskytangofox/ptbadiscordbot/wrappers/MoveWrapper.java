@@ -1,9 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MoveWrapper {
@@ -49,4 +46,14 @@ public class MoveWrapper {
                 .filter(v -> preparedText.contains(preparedPrefix+v))
                 .collect(Collectors.toList());
     }
+
+    public Collection<String> getModifiesMoves(){
+        HashSet<String> set = new HashSet<String>();
+        if (name.contains("(")){
+            String list = name.substring(name.indexOf("(")+1,name.indexOf(")"));
+            return Arrays.stream(list.split(",")).collect(Collectors.toList());
+        }
+        return set;
+    }
+
 }

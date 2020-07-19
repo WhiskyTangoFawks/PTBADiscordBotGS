@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class GoogleSheetAPI {
@@ -107,10 +108,9 @@ public class GoogleSheetAPI {
         return new RangeWrapper(getData( sheetID, tab, range),tab, range);
     }
 
-    private GridData getData(String sheetID, String tab, String range) throws IOException {
+    GridData getData(String sheetID, String tab, String range) throws IOException {
         ArrayList<String> ranges = new ArrayList<String>();
         ranges.add((tab+"!"+range));
-
         Sheets.Spreadsheets.Get request = service.spreadsheets().get(sheetID);
         request.setRanges(ranges);
         request.setFields("sheets/data/rowData/values/formattedValue,sheets/data/rowData/values/note");
@@ -118,15 +118,29 @@ public class GoogleSheetAPI {
         return response.getSheets().get(0).getData().get(0);
     }
 
-    public void setValue(String sheetID, String tab, String cell, String value) throws IOException {
-        String range = tab+"!"+cell+":"+cell;
-        List<List<Object>> values = Arrays.asList(Arrays.asList(value));
-        ValueRange body = new ValueRange().setValues(values);
-        UpdateValuesResponse result =
-                service.spreadsheets().values().update(sheetID, range, body)
-                        .setValueInputOption("RAW")
-                        .execute();
-        System.out.printf("%d cells updated.", result.getUpdatedCells());
+    public List<String> getValues(String sheetID, String tab, List<String> range) throws IOException {
+        ArrayList<String> ranges = new ArrayList<String>();
+        range.stream().forEach(ref ->ranges.add((tab+"!"+ref)));
+        Sheets.Spreadsheets.Get request = service.spreadsheets().get(sheetID);
+        request.setRanges(ranges);
+        request.setFields("sheets/data/rowData/values/formattedValue");
+        Spreadsheet response = request.execute();
+        return response.getSheets().get(0).getData().stream()
+                .map(data -> data.getRowData().get(0).getValues().get(0).getFormattedValue())
+                .collect(Collectors.toList());
+    }
+
+    public void setValues(String sheetID, String tab, List<String> cells, List<String> value) throws IOException {
+        List<String> ranges = cells.stream().map(c->c+":"+c).collect(Collectors.toList());
+        //String valueRenderOption = ""; // TODO: Update placeholder value.
+
+        Sheets.Spreadsheets.Values.BatchGet request =
+                service.spreadsheets().values().batchGet(sheetID);
+        request.setRanges(ranges);
+        //request.setValueRenderOption(valueRenderOption);
+        //request.setDateTimeRenderOption(dateTimeRenderOption);
+
+        BatchGetValuesResponse response = request.execute();
     }
 
 }

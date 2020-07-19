@@ -1,8 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
 import com.whiskytangofox.ptbadiscordbot.Game;
-import com.whiskytangofox.ptbadiscordbot.PlayerNotFoundException;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -12,7 +11,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
@@ -46,7 +44,7 @@ public class MoveBuilderTest {
     @Before
     public void setupMocks() throws PlayerNotFoundException {
         MockitoAnnotations.initMocks(this);
-        when(mockGame.getStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
+        when(mockGame.getRegisteredStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
     }
 
     @Test

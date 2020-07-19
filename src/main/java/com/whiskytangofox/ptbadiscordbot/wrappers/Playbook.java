@@ -1,17 +1,16 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 public class Playbook {
     public String player;
-    public HashMap<String, CellRef> stats = new HashMap<String, CellRef>();
-    public HashMap<String, CellRef> stat_penalties = new HashMap<String, CellRef>();
-    public HashMap<String, CellRef> resources = new HashMap<String, CellRef>();
-    public HashMap<String, String> moveOverrideDice = new HashMap<String, String>();
+    public String title;
+    public HashMapIgnoreCase<CellRef> stats = new HashMapIgnoreCase<CellRef>();
+    public HashMapIgnoreCase<CellRef> stat_penalties = new HashMapIgnoreCase<CellRef>();
+    public HashMapIgnoreCase<ArrayList<CellRef>> resources = new HashMapIgnoreCase<ArrayList<CellRef>>();
+    public HashMapIgnoreCase<String> moveOverrideDice = new HashMapIgnoreCase<String>();
     public PatriciaTrieIgnoreCase<MoveWrapper> moves = new PatriciaTrieIgnoreCase<MoveWrapper>();
     public String tab;
 

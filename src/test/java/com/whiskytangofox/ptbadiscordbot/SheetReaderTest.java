@@ -2,6 +2,7 @@ package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
+import com.whiskytangofox.ptbadiscordbot.wrappers.HashMapIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
@@ -56,19 +57,10 @@ public class SheetReaderTest {
         MockitoAnnotations.initMocks(this);
         when(mockChannel.sendMessage(anyString())).thenReturn(mockMessageAction);
         SheetReader.logger = mockLogger;
-        game = new Game(mockChannel, null);
-        game.playbooks = new HashMap<>();
+        game = new Game(null, mockChannel, null, false);
+        game.playbooks = new HashMapIgnoreCase<>();
         game.basicMoves = new PatriciaTrieIgnoreCase<>();
         reader = new SheetReader(game);
-    }
-
-    @Test
-    public void testReadSheetNewPlaybook() {
-        notes.put(new CellRef("A1"), SheetReader.Metadata.new_playbook.name());
-        values.put(new CellRef("A1"), "test");
-        reader.parseSheet(sheet);
-        verify(mockLogger, Mockito.times(1)).info(SheetReader.start_load_msg +"test");
-        verify(mockLogger, Mockito.times(0)).warn("Unexpected exception reading sheet");
     }
 
     @Test
@@ -184,7 +176,7 @@ public class SheetReaderTest {
     }
 
     @Test
-    public void testReadSheetResource(){
+    public void testReadSheetResource_Single(){
         notes.put(new CellRef("A1"), SheetReader.Metadata.new_playbook.name());
         values.put(new CellRef("A1"), "test playbook1");
 
@@ -197,7 +189,12 @@ public class SheetReaderTest {
 
         Playbook book = game.playbooks.get("discordName");
         assertNotNull(book);
-        assertEquals("A2", book.resources.get("hp").getCellRef());
+        assertEquals("A2", book.resources.get("hp").get(0).getCellRef());
+    }
+
+    @Test
+    public void testReadSheetResource_List(){
+        //TODO
     }
 
     @Test
@@ -221,7 +218,7 @@ public class SheetReaderTest {
     public void testReadSheetBadNote(){
         notes.put(new CellRef("A1"), "this should throw an exception");
         reader.parseSheet(sheet);
-        verify(mockChannel).sendMessage("Unexpected exception trying to read cell A1, note= this should throw an exception");
+        verify(mockChannel).sendMessage(anyString());
     }
 
     @Test
@@ -233,9 +230,70 @@ public class SheetReaderTest {
         assertEquals("test basic move", builder.get(0));
         assertEquals("move text", builder.get(1));
     }
+    @Test
+    public void testParseMoveFromNote(){
+        String note = "playbook_move:name=Override:text=+1 Readiness when you roll Defend 7+";
+        MoveBuilder builder = reader.parseMoveFromNote(note);
+        assertEquals("Override", builder.get(0));
+        assertEquals("+1 Readiness when you roll Defend 7+", builder.get(1));
+    }
 
     @Test
-    public void testParseMoveList(){
+    public void testParseMoveNoteOverrideTitle(){
+        values.put(new CellRef("A1"), "move text");
+        notes.put(new CellRef("A1"), "playbook_move:name=Move Name");
+
+        MoveBuilder builder = reader.parseMove(sheet, 1, 1);
+        assertEquals("Move Name", builder.get(0));
+        assertEquals("move text", builder.get(1));
+    }
+
+    @Test
+    public void testParseMoveNoteOverrideText(){
+        values.put(new CellRef("A1"), "Move Name");
+        notes.put(new CellRef("A1"), "playbook_move:text=move text");
+
+        MoveBuilder builder = reader.parseMove(sheet, 1, 1);
+        assertEquals("Move Name", builder.get(0));
+        assertEquals("move text", builder.get(1));
+    }
+
+
+    @Test
+    public void testParseMoveNoteOverrideTitleAndName(){
+        values.put(new CellRef("A1"), "TRUE");
+        values.put(new CellRef("B1"), "Shield (+1 Armor; +1 Readiness when you roll Defend 7+)");
+        notes.put(new CellRef("A1"), "playbook_move:name=Override:text=+1 Readiness when you roll Defend 7+");
+        values.put(new CellRef("A2"), "Not part of the move");
+
+        MoveBuilder builder = reader.parseMove(sheet, 1, 1);
+        assertEquals("Override", builder.get(0));
+        assertEquals("+1 Readiness when you roll Defend 7+", builder.get(1));
+    }
+
+    @Test
+    public void testReadSheetForParseMoveNoteOverride(){
+        notes.put(new CellRef("A1"), SheetReader.Metadata.new_playbook.name());
+        values.put(new CellRef("A1"), "test playbook1");
+
+        values.put(new CellRef("A2"), "TRUE");
+        values.put(new CellRef("B3"), "Shield (+1 Armor; +1 Readiness when you roll Defend 7+)");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.playbook_move.name()+":name=Override:text=+1 Readiness when you roll Defend 7+");
+        values.put(new CellRef("A3"), "Not part of the move");
+
+        values.put(new CellRef("C1"), "discordName");
+        notes.put(new CellRef("C1"), SheetReader.Metadata.discord_name.name());
+
+        reader.parseSheet(sheet);
+
+        Playbook book = game.playbooks.get("discordName");
+        assertNotNull(book);
+        assertTrue(book.moves.get("Override").text.contains("+1 Readiness when you roll Defend 7+"));
+    }
+
+
+    @Test
+    public void testParseMoveIndentedText(){
         values.put(new CellRef("A1"), "test basic move");
         values.put(new CellRef("A2"), " ");
         values.put(new CellRef("B2"), "move text");
@@ -267,7 +325,33 @@ public class SheetReaderTest {
     }
 
     @Test
+    public void testParseMoveNotList(){
+        values.put(new CellRef("A1"), "test basic move");
+        values.put(new CellRef("A2"), "text 1");
+        values.put(new CellRef("A3"), "test 2");
+        MoveBuilder builder = reader.parseMove(sheet, 1, 1);
+        assertEquals(2, builder.size());
+        assertEquals("test basic move", builder.get(0));
+        assertEquals("text 1", builder.get(1));
+    }
+
+    @Test
+    public void testParseMoveList(){
+        notes.put(new CellRef("A1"), "basic_move:list");
+        values.put(new CellRef("A1"), "test basic move");
+        values.put(new CellRef("A2"), "text 1");
+        values.put(new CellRef("A3"), "text 2");
+        MoveBuilder builder = reader.parseMove(sheet, 1, 1);
+        assertEquals(4, builder.size());
+        assertEquals("test basic move", builder.get(0));
+        assertEquals("text 1", builder.get(1));
+        assertEquals("text 2", builder.get(2));
+
+    }
+
+    @Test
     public void testParseMoveBooleanTextTrueAndFalse(){
+        notes.put(new CellRef("A1"), "basic_move:list");
         values.put(new CellRef("A1"), "test basic move");
         values.put(new CellRef("A2"), "TRUE");
         values.put(new CellRef("B2"), "move text");

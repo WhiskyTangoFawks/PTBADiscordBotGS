@@ -1,5 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.jetbrains.annotations.NotNull;
 

@@ -35,4 +35,12 @@ public class GoogleSheetAPITest {
         api.getSheet(sheetID);
     }
 
+    //@Test
+    public void devSpike_GetMultipleCells() throws IOException, GeneralSecurityException {
+        GoogleSheetAPI api = new GoogleSheetAPI();
+        //List<String> list = api.getValues(sheetID, tab, "C23", "A2");
+        //assertEquals("c23", list.get(0));
+        //assertEquals("a2", list.get(1));
+    }
+
 }

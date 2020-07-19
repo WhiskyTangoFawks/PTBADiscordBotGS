@@ -7,8 +7,14 @@ public class MoveBuilder {
 
     private ArrayList<String> builder = new ArrayList<String>();
 
-    public void addLine(){
+    public MoveBuilder addLine(){
         builder.add("");
+        return this;
+    }
+
+    public MoveBuilder addLine(String string){
+        builder.add(string);
+        return this;
     }
 
     public String get(int index){
@@ -47,16 +53,9 @@ public class MoveBuilder {
         return move;
     }
 
-    public Collection<String> getModifiesMoves(){
-        HashSet<String> set = new HashSet<String>();
-        String name = builder.get(0);
-        if (name.contains("(")){
-            String list = name.substring(name.indexOf("(")+1,name.indexOf(")"));
-            for (String basicMoveName : list.split(",")){
-                set.add(basicMoveName);
-            }
-        }
-        return set;
+    public int size(){
+        return builder.size();
     }
+
 
 }

@@ -1,7 +1,9 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.DieWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
 
@@ -15,10 +17,11 @@ public class ParsedCommand {
     MoveWrapper move = null;
     int mod = 0;
     ArrayList<DieWrapper> dice = new ArrayList<DieWrapper>();
-    String rollResult;
+    String resultText;
     String stat = null;
     int statMod = 0;
     boolean doRoll = false;
+    String resource = null;
     boolean failMsg = false;
 
 
@@ -30,7 +33,10 @@ public class ParsedCommand {
         if (command != null) { //if command is null, then we are running tests
             splitAndParseCommand(command);
             if (doRoll) {
-                rollResult = getRollResults(failMsg);
+                resultText = getRollResults(failMsg);
+            }
+            if (resource != null){
+                resultText = handleResourceRequest();
             }
         }
     }
@@ -41,7 +47,6 @@ public class ParsedCommand {
         command = command.replaceAll("\\+", " ");
         String[] parameters = command.split("( )|/|(?=-)");
         for (int i = 0; i < parameters.length; i++) {
-            //Zeroth - check if the command is a roll
             if (parameters[i].isBlank()){
                 continue;
             }
@@ -54,6 +59,11 @@ public class ParsedCommand {
                    //skips the rest of the move name when it is written with spaces
                     i = i + getMoveArrayPositions(author, i, parameters);
                     move = game.getMove(author, parameters[i]);
+                } else if (isDieNotation(parameters[i])){
+                    parseDieNotation(parameters[i]);
+                    doRoll = true;
+                } else if(game.isResource(author, parameters[i])){
+                    resource = parameters[i];
                 }
                 else {
                     throw new IllegalArgumentException("Unrecognised command " + parameters[i]);
@@ -80,7 +90,7 @@ public class ParsedCommand {
                 setDefaultDice();
             }
             if (move != null && stat == null){
-                stat = move.getMoveStat(game.getStatsForPlayer(author));
+                stat = move.getMoveStat(game.getRegisteredStatsForPlayer(author));
             } //NOT IF
             if (stat != null){
                 statMod = game.getStat(author, stat);
@@ -93,11 +103,14 @@ public class ParsedCommand {
         return stringToCheck.matches(".*\\dd\\d.*");
     }
 
-    public void setDefaultDice() throws IOException, PlayerNotFoundException {
-        Playbook book = game.getPlaybook(author);
-        if (move != null && book != null && book.moveOverrideDice.containsKey(move.name)){
+    public void setDefaultDice() throws IOException {
+        Playbook book = game.playbooks.get(author);
+        if (move != null && book != null && book.moveOverrideDice.containsKey(move.name)) {
             parseDieNotation(book.moveOverrideDice.get(move.name));
         } else {
+            if (game.sheet_definitions.getProperty("default_system_dice") == null){
+                game.sendGameMessage("system_default_dice has not been set in the properties tab");
+            }
             parseDieNotation(game.sheet_definitions.getProperty("default_system_dice"));
             failMsg = true;
         }
@@ -126,7 +139,7 @@ public class ParsedCommand {
         }
     }
 
-    private boolean isInteger(String string) {
+    static boolean isInteger(String string) {
         try {
             Integer.parseInt(string);
             return true;
@@ -156,8 +169,10 @@ public class ParsedCommand {
             }
         }
         return parameters.length-1-startPos;
-
     }
 
+    public String handleResourceRequest() throws IOException, PlayerNotFoundException {
+        return game.modifyResource(author, resource, mod+statMod).getDescriptiveResult();
+    }
 
 }

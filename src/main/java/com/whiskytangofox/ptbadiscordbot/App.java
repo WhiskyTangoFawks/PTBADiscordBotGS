@@ -4,6 +4,7 @@ import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -63,8 +64,10 @@ public class App extends ListenerAdapter {
             return;
         }
         String msg = event.getMessage().getContentDisplay();
-        if (msg.contains("register new game") && msg.contains("/")) {
-            registerGame(event.getChannel(), msg);
+        //TODO- swap this over to accept just the google sheet URL
+
+        if (msg.contains("docs.google.com/spreadsheets")) {
+            registerGame(event.getGuild(), event.getChannel(), msg);
         }
 
         if (registeredGames.containsKey(event.getChannel())) {
@@ -73,11 +76,11 @@ public class App extends ListenerAdapter {
 
     }
 
-    public boolean registerGame(MessageChannel channel, String msg) {
+    public boolean registerGame(Guild guild, MessageChannel channel, String msg) {
         try {
-            channel.sendMessage("Registration request received, attempting to create game").queue();
+            channel.sendMessage("Sheet Link Detected, attempting to register game").queue();
             String sheetID = getSheetID(msg);
-            Game game = new Game(channel, sheetID);
+            Game game = new Game(guild, channel, sheetID, msg.contains("debug"));
             channel.sendMessage("Game registered").queue();
             registeredGames.put(channel, game);
             return true;
@@ -94,14 +97,18 @@ public class App extends ListenerAdapter {
         }
     }
 
-    public String getSheetID(String msg) {
+    public static String getSheetID(String msg) {
         try {
-            String sheetID = msg.substring(msg.indexOf("/") + 1, msg.lastIndexOf("/"));
+            int start = msg.indexOf("/d/")+3;
+            int end = msg.lastIndexOf("/");
+            String sheetID = msg.substring(start, end);
+
             return sheetID;
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to extract sheet ID");
         }
     }
 
+    //TODO - add a REST service which allows commands to be received
 
 }

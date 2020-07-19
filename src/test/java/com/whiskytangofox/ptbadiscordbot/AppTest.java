@@ -48,20 +48,20 @@ public class AppTest {
 
     @Test
     public void testRegisterGame() {
-        app.registerGame(mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqHPgaY/");
+        app.registerGame(null, mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqHPgaY/");
         assertTrue(app.registeredGames.containsKey(mockChannel));
     }
 
     @Test
     public void testRegisterGameBadLink() {
-        app.registerGame(mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqH/");
+        app.registerGame(null, mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqH/");
         //assertTrue(app.registeredGames.containsKey(mockChannel));
         verify(mockChannel).sendMessage("404 Not Found: SheetID does not have a google sheet");
     }
 
     @Test
     public void testRegisterGameBadFormat() {
-        app.registerGame(mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqH");
+        app.registerGame(null, mockChannel, "register new game /1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqH");
         //assertTrue(app.registeredGames.containsKey(mockChannel));
         verify(mockChannel).sendMessage("Unexpected error: Unable to extract sheet ID");
 
@@ -74,9 +74,15 @@ public class AppTest {
 
     @Test
     public void testNoSharePermissionsForGoogleAPI(){
-        app.registerGame(mockChannel, "/1EA68XZczUOl6lntgl1MklN27O9NHmzLsZejcMTGgl2A/");
+        app.registerGame(null, mockChannel, "/1EA68XZczUOl6lntgl1MklN27O9NHmzLsZejcMTGgl2A/");
         verify(mockChannel).sendMessage("403 Forbidden: The sheet does not have the appropriate share permissions");
     }
 
+    @Test
+    public void testGetSheetID(){
+       String msg = "https://docs.google.com/spreadsheets/d/1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqHPgaY/edit#gid=0";
+       String id = App.getSheetID(msg);
+       assertEquals("1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqHPgaY", id);
+    }
 
 }

@@ -1,17 +1,21 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.MissingValueException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
 import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.KeyConflictException;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
-import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
+import com.whiskytangofox.ptbadiscordbot.wrappers.*;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.whiskytangofox.ptbadiscordbot.App.googleSheetAPI;
 import static com.whiskytangofox.ptbadiscordbot.App.logger;
 
 public class Game {
@@ -19,35 +23,92 @@ public class Game {
     public Properties sheet_definitions = new Properties();
 
     public PatriciaTrieIgnoreCase<MoveWrapper> basicMoves = new PatriciaTrieIgnoreCase<MoveWrapper>();
-    public HashMap<String, Playbook> playbooks = new HashMap<String, Playbook>();
+    public HashMapIgnoreCase<Playbook> playbooks = new HashMapIgnoreCase<Playbook>();
 
     private final String sheetID;
 
+    public final Guild guild;
     public final MessageChannel channel;
     public SheetReader reader;
 
-    public Game(MessageChannel channel, String sheetID) throws IOException {
+    private final boolean debugLog;
+
+    public Game(Guild guild, MessageChannel channel, String sheetID, Boolean debug) throws IOException {
+        this.guild = guild;
+        this.debugLog = debug;
         this.channel = channel;
         this.sheetID = sheetID;
         this.reader = new SheetReader(this);
         if (sheetID != null) try { //if sheetID == null, then we are running tests
-            loadProperties();
             readSheet();
         } catch (Exception e){
-            sendGameMessage("Unexpected exception while trying to register game");
+            sendGameMessage("Unexpected exception while trying to read the game sheet");
             throw e;
         }
     }
 
     public void readSheet() throws IOException {
-        for (RangeWrapper tab : App.googleSheetAPI.getSheet(sheetID)){
-            reader.parseSheet(tab);
+        ArrayList<RangeWrapper> sheet = App.googleSheetAPI.getSheet(sheetID);
+        sendDebugMsg("Google sheet retrieved");
+        for (RangeWrapper tab : sheet){
+            if (tab.tab.equalsIgnoreCase("properties"))  {
+                loadPropertiesTab(tab);
+            } else {
+                reader.parseSheet(tab);
+            }
+            sendDebugMsg("Parsed sheet: "+ tab.tab);
+        }
+        //Post-load stuff goes here
+        try {
+            sendDebugMsg("Sheets loaded, finalizing");
+            copyAndStoreModifiedBasicMoves();
+        } catch (Exception e){
+            sendGameMessage("Unexpected exception while finalizing load: " + e.toString());
+        }
+    }
+
+    public void loadPropertiesTab(RangeWrapper tab){
+        try {
+            tab.getValueSet().stream()
+                    .filter(Objects::nonNull)
+                    .filter(prop -> prop.contains("="))
+                    .forEach(prop -> sheet_definitions.put(prop.split("=")[0], prop.split("=")[1]));
+            sendDebugMsg("Properties loaded");
+        } catch (Exception e){
+            sendGameMessage("Unexpected exception while trying to load properties");
+            throw e;
+        }
+    }
+
+    public void copyAndStoreModifiedBasicMoves(){
+        for (Playbook book : playbooks.values()){
+            HashMap<String, MoveWrapper> buffer = new HashMap<String, MoveWrapper>();
+            for (MoveWrapper advanced : book.moves.values()){
+                for (String basicName : advanced.getModifiesMoves()){
+                    try {
+                        MoveWrapper basic = buffer.get(basicName);
+                        if (basic == null){
+                            basic = getMove(book.player, basicName);
+                        }
+                        if (basic != null) {
+                            MoveWrapper copy = basic.getModifiedCopy(advanced);
+                            buffer.put(copy.name, copy);
+                        } else {
+                            sendGameMessage("Unable to find: "+ basicName + " while loading "+ advanced.name);
+                        }
+                    } catch (Exception e){
+                        sendGameMessage("Exception occurred while trying to load modified basic move: " + advanced.name);
+                        e.printStackTrace();
+                    }
+                }
+            }
+            book.moves.putAll(buffer);
         }
     }
 
     public void OnMessageReceived(MessageReceivedEvent event) {
         String msg = event.getMessage().getContentDisplay();
-        String player = event.getAuthor().getName().toLowerCase().replace(" ","");
+        String player = event.getAuthor().getName();
         try {
             if (msg.startsWith(sheet_definitions.getProperty("commandchar"))) {// /alias string
                 msg = msg.toLowerCase().replace(sheet_definitions.getProperty("commandchar"), "");
@@ -60,8 +121,8 @@ public class Game {
                     if (command.move != null) {
                         response = response + command.move.text + System.lineSeparator();
                     }
-                    if (command.rollResult != null) {
-                        response = response + event.getAuthor().getAsMention() + " " + command.rollResult;
+                    if (command.resultText != null) {
+                        response = response + event.getAuthor().getAsMention() + " " + command.resultText;
                     }
                     sendGameMessage(response);
                 }
@@ -82,21 +143,7 @@ public class Game {
     }
 
     public void reloadGame() throws IOException {
-        loadProperties();
         readSheet();
-    }
-
-    public void loadProperties() throws IOException {
-        try {
-            RangeWrapper range = App.googleSheetAPI.getRange(sheetID, "properties", "A1:A100");
-            range.getValueSet().stream()
-                    .filter(Objects::nonNull)
-                    .filter(prop -> prop.contains("="))
-                    .forEach(prop -> sheet_definitions.put(prop.split("=")[0], prop.split("=")[1]));
-        } catch (Exception e){
-            sendGameMessage("Unexpected exception while trying to load properties");
-            throw e;
-        }
     }
 
     public boolean isMove(String author, String string) throws KeyConflictException {
@@ -115,23 +162,22 @@ public class Game {
     }
 
     public int getStat(String author, String stat) throws IOException, DiscordBotException {
-        //TODO- use either getBatch or getArea to make a single call instead of 2
         Playbook book = playbooks.get(author);
-        CellRef cellref = book.stats.get(stat);
-        String value = getLiveCellValue(book.tab, cellref.getCellRef());
+        String statRef = book.stats.get(stat).getCellRef();
+        String penaltyRef = book.stat_penalties.get(stat).getCellRef();
+        ArrayList<String> list = new ArrayList<String>();
+        list.add(statRef);
+        list.add(penaltyRef);
+        List<String> response = googleSheetAPI.getValues(sheetID, book.tab, list);
+
         Integer intValue = null;
         try {
-            intValue = Integer.parseInt(value);
+            intValue = Integer.parseInt(response.get(0));
         } catch (NumberFormatException e){
             throw new MissingValueException("Player: " + author + ", Stat:" + stat+ ", returned Not A Number, please correct your sheet");
         }
-        //TODO - add penalty property instead of using a -1
-        //TODO - try parsing as both integer and boolean
 
-        cellref = book.stat_penalties.get(stat);
-
-        value = getLiveCellValue(book.tab, cellref.getCellRef());
-        boolean isDebilitated = Boolean.parseBoolean(value);
+        boolean isDebilitated = Boolean.parseBoolean(response.get(1));
         int penalty = isDebilitated ? 1 : 0;
         return intValue - penalty;
     }
@@ -141,10 +187,10 @@ public class Game {
         if (book == null){
             throw new PlayerNotFoundException("Unable to find a registered playbook for: "+ player);
         }
-        return book.stats.containsKey(stat.toLowerCase());
+        return book.stats.containsKey(stat);
     }
 
-    public Collection<String> getStatsForPlayer(String player) throws PlayerNotFoundException {
+    public Collection<String> getRegisteredStatsForPlayer(String player) throws PlayerNotFoundException {
         Playbook book = playbooks.get(player);
         if (book == null){
             throw new PlayerNotFoundException("No playbook registered to "+ player);
@@ -152,15 +198,64 @@ public class Game {
         return book.stats.keySet();
     }
 
-    public void setValue(String cellRef, String value){
-        //TODO
+   public boolean isResource(String player, String resource) throws PlayerNotFoundException {
+        return getPlaybook(player).resources.containsKey(resource);
     }
+
+    public SetResourceResult modifyResource(String player, String resource, int mod) throws PlayerNotFoundException, IOException {
+        Playbook book = getPlaybook(player);
+        List<CellRef> cells = book.resources.get(resource);
+        List<String> refs = cells.stream().map(c -> c.getCellRef()).collect(Collectors.toList());
+        List<String> values = googleSheetAPI.getValues(sheetID, book.tab, refs);
+            int oldValue = 0;
+        int newValue = 0;
+        if (values.size() == 1 && ParsedCommand.isInteger(values.get(0))){
+            oldValue = Integer.parseInt(values.get(0));
+            newValue = oldValue + mod;
+            values.set(0, String.valueOf(newValue));
+            if (mod != 0) {
+                googleSheetAPI.setValues(sheetID, book.tab, refs, values);
+            }
+        }else if (values.get(0).equalsIgnoreCase("true") || values.get(0).equalsIgnoreCase("true")){
+            oldValue = (int)values.stream().filter(v -> v.equalsIgnoreCase("true")).count();
+            if (mod != 0) {
+                //for a positive, iterate up, for a negative, iterate down
+                boolean isModPos = mod > 0;
+                int counter = 0;
+                if (isModPos) {
+                    for (int i = 0; counter < mod && i < values.size(); i++) {
+                        if (values.get(i) == "FALSE") {
+                            values.set(i, "TRUE");
+                            counter++;
+                        }
+                    }
+                } else { //modIsNegative
+                    for (int i = values.size()-1; counter < Math.abs(mod) && i >= 0; i--) {
+                        if (values.get(i) == "TRUE") {
+                            values.set(i, "FALSE");
+                            counter++;
+                        }
+                    }
+                }
+                googleSheetAPI.setValues(sheetID, book.tab, refs, values);
+            }
+            newValue = (int)values.stream().filter(v -> v.equalsIgnoreCase("true")).count();
+        }
+        return new SetResourceResult(resource, oldValue, mod, newValue);
+    }
+
 
     public Playbook getPlaybook(String player) throws PlayerNotFoundException {
         if (!playbooks.containsKey(player)){
             throw new PlayerNotFoundException("No playbook found registered to " + player);
         }
         return playbooks.get(player);
+    }
+
+    public void sendDebugMsg(String msg){
+        if (debugLog){
+            sendGameMessage(msg);
+        }
     }
 
 }

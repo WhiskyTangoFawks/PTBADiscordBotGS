@@ -1,5 +1,8 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.*;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
@@ -16,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Properties;
 
 import static org.junit.Assert.*;
@@ -31,6 +33,7 @@ public class ParsedCommandTest {
     static MoveWrapper move;
     static MoveBuilder builder;
 
+    static final String testPlayer = "test1";
 
     @Mock
     Game mockGame;
@@ -64,7 +67,8 @@ public class ParsedCommandTest {
         when(mockChannel.sendMessage(anyString())).thenReturn(mockMessageAction);
 
         String[] stats = {"str", "dex", "con", "int", "wis", "cha"};
-        when(mockGame.getStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
+        mockGame.playbooks=new HashMapIgnoreCase();
+        when(mockGame.getRegisteredStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
         when(mockGame.isStat("test", "STR")).thenReturn(true);
         when(mockGame.isStat(anyString(),anyString())).thenReturn(false);
         when(mockGame.getStat(anyString(), anyString())).thenReturn(1);
@@ -78,7 +82,7 @@ public class ParsedCommandTest {
         mockGame.sheet_definitions = new Properties();
         mockGame.sheet_definitions.put("default_system_dice", "2d6");
 
-        tester = new ParsedCommand(mockGame, "test1", null);
+        tester = new ParsedCommand(mockGame, testPlayer, null);
     }
 
     @Test
@@ -196,19 +200,19 @@ public class ParsedCommandTest {
         String[] test2 ={"hack", "adv"};
         String[] test3={"hack", "and", "slash"};
         String[] test4={"hack", "and", "slash", "+2"};
-        assertEquals(0, tester.getMoveArrayPositions("test1", 0, test1));
-        assertEquals(0, tester.getMoveArrayPositions("test1", 0, test2));
-        assertEquals(2, tester.getMoveArrayPositions("test1", 0, test3));
-        assertEquals(2, tester.getMoveArrayPositions("test1", 0, test4));
+        assertEquals(0, tester.getMoveArrayPositions(testPlayer, 0, test1));
+        assertEquals(0, tester.getMoveArrayPositions(testPlayer, 0, test2));
+        assertEquals(2, tester.getMoveArrayPositions(testPlayer, 0, test3));
+        assertEquals(2, tester.getMoveArrayPositions(testPlayer, 0, test4));
 
         String[] test11 ={"bob", "hack"};
         String[] test21 ={"bob", "hack", "adv"};
         String[] test31={"bob", "hack", "and", "slash"};
         String[] test41={"bob", "hack", "and", "slash", "+2"};
-        assertEquals(0, tester.getMoveArrayPositions("test1", 1, test11));
-        assertEquals(0, tester.getMoveArrayPositions("test1", 1, test21));
-        assertEquals(2, tester.getMoveArrayPositions("test1", 1, test31));
-        assertEquals(2, tester.getMoveArrayPositions("test1", 1, test41));
+        assertEquals(0, tester.getMoveArrayPositions(testPlayer, 1, test11));
+        assertEquals(0, tester.getMoveArrayPositions(testPlayer, 1, test21));
+        assertEquals(2, tester.getMoveArrayPositions(testPlayer, 1, test31));
+        assertEquals(2, tester.getMoveArrayPositions(testPlayer, 1, test41));
 
     }
 
@@ -220,9 +224,9 @@ public class ParsedCommandTest {
 
     @Test
     public void splitAndParseCommand5() throws Exception {
-        tester = new ParsedCommand(mockGame, "test1", null);
+        tester = new ParsedCommand(mockGame, testPlayer, null);
 
-        MoveWrapper move = mockGame.getMove("test1", "Hack and Slash");
+        MoveWrapper move = mockGame.getMove(testPlayer, "Hack and Slash");
         assertEquals("Hack and Slash", move.name);
 
         tester.splitAndParseCommand("roll hack +10");
@@ -241,10 +245,10 @@ public class ParsedCommandTest {
     @Test
     public void testSetDefaultDice() throws IOException, DiscordBotException, KeyConflictException {
         tester.move = new MoveWrapper("Deal Damage", "Test deal damage text");
-        mockGame.playbooks=new HashMap();
         Playbook book = new Playbook(null);
+        book.player =
         book.moveOverrideDice.put("Deal Damage", "1d8");
-        when(mockGame.getPlaybook("test1")).thenReturn(book);
+        mockGame.playbooks.put(testPlayer, book);
         tester.setDefaultDice();
         assertEquals(1, tester.dice.get(0).num);
         assertEquals(8, tester.dice.get(0).size);
@@ -253,12 +257,54 @@ public class ParsedCommandTest {
     @Test
     public void testResultWithDealDamageOverrideDice() throws IOException, DiscordBotException {
         tester.move = new MoveWrapper("Deal Damage", "Test deal damage text");
-        mockGame.playbooks=new HashMap();
         Playbook book = new Playbook(null);
         book.moveOverrideDice.put("Deal Damage", "1d8");
-        when(mockGame.getPlaybook("test1")).thenReturn(book);
+        mockGame.playbooks.put(testPlayer, book);
         String result = tester.getRollResults(false);
+        logger.info(result);
         assertTrue(result.contains( "1d8"));
     }
+
+    @Test
+    public void testRollWithNoSheet() throws KeyConflictException, DiscordBotException, IOException {
+        tester = new ParsedCommand(mockGame, "no_sheet", "roll");
+    }
+
+    @Test
+    public void testHandleResourceRequest() throws IOException, PlayerNotFoundException {
+        when(mockGame.modifyResource(testPlayer, "hp", 1))
+                .thenReturn(new SetResourceResult("hp", 10, 1, 11));
+        tester.statMod = 0;
+        tester.mod = 1;
+        tester.resource = "hp";
+
+        String result = tester.handleResourceRequest();
+        assertTrue(result.contains("11"));
+    }
+
+    @Test
+    public void testHandleResourceRequestSubtract() throws IOException, PlayerNotFoundException {
+        when(mockGame.modifyResource(testPlayer, "hp", -1))
+                .thenReturn(new SetResourceResult("hp", 10, -1, 9));
+        tester.statMod = 0;
+        tester.mod = -1;
+        tester.resource = "hp";
+
+        String result = tester.handleResourceRequest();
+        logger.info(result);
+        assertTrue(result.contains("9"));
+    }
+
+    @Test
+    public void testParseResourceRequest() throws IOException, PlayerNotFoundException, KeyConflictException {
+        when(mockGame.isResource(testPlayer, "hp")).thenReturn(true);
+        when(mockGame.modifyResource(testPlayer, "hp", 1))
+                .thenReturn(new SetResourceResult("hp", 10, 1, 11));
+        tester.splitAndParseCommand("hp +1");
+        assertEquals(tester.resource, "hp");
+        assertEquals(tester.mod, 1);
+    }
+
+
 
 }
