@@ -31,27 +31,17 @@ public class App extends ListenerAdapter {
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {
         googleSheetAPI = new GoogleSheetAPI();
-        loadConfig();
-
+        String token = args[0];
+        if (token == null){
+            throw new IllegalArgumentException("Missing discord bot token");
+        }
         try {
-            jda = new JDABuilder(config.getProperty("token"))
+            jda = new JDABuilder(token)
                     .addEventListeners(new App())
                     .build();
             jda.getPresence().setActivity(Activity.of(Activity.ActivityType.CUSTOM_STATUS, "type !info for help"));
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    public static void loadConfig() throws IOException {
-        try {
-            config.load(new FileInputStream("properties/config.properties"));
-        } catch (FileNotFoundException e) {
-            File dir = new File("properties");
-            if (!dir.exists()) {
-                dir.mkdir();
-            }
-            config.store(new FileOutputStream("properties/config.properties"), null);
         }
     }
 
@@ -64,10 +54,13 @@ public class App extends ListenerAdapter {
             return;
         }
         String msg = event.getMessage().getContentDisplay();
-        //TODO- swap this over to accept just the google sheet URL
 
         if (msg.contains("docs.google.com/spreadsheets")) {
             registerGame(event.getGuild(), event.getChannel(), msg);
+        }
+
+        if(msg.contains("/shutdown")){
+            System.exit(0);
         }
 
         if (registeredGames.containsKey(event.getChannel())) {

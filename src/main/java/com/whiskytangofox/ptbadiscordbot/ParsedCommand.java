@@ -1,9 +1,9 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.DieWrapper;
-import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
 
@@ -33,7 +33,8 @@ public class ParsedCommand {
         if (command != null) { //if command is null, then we are running tests
             splitAndParseCommand(command);
             if (doRoll) {
-                resultText = getRollResults(failMsg);
+                boolean failMsgEnabled = "true".equalsIgnoreCase(game.settings.getProperty("fail_xp"));
+                resultText = getRollResults(failMsgEnabled ? failMsg : false);
             }
             if (resource != null){
                 resultText = handleResourceRequest();
@@ -108,10 +109,10 @@ public class ParsedCommand {
         if (move != null && book != null && book.moveOverrideDice.containsKey(move.name)) {
             parseDieNotation(book.moveOverrideDice.get(move.name));
         } else {
-            if (game.sheet_definitions.getProperty("default_system_dice") == null){
+            if (game.settings.getProperty("default_system_dice") == null){
                 game.sendGameMessage("system_default_dice has not been set in the properties tab");
             }
-            parseDieNotation(game.sheet_definitions.getProperty("default_system_dice"));
+            parseDieNotation(game.settings.getProperty("default_system_dice"));
             failMsg = true;
         }
     }
@@ -150,7 +151,7 @@ public class ParsedCommand {
 
     private String getInfoMessage(){
         String r = System.lineSeparator();
-        String c = game.sheet_definitions.getProperty("commandchar");
+        String c = game.settings.getProperty("commandchar");
         String infoText = "**"+c+"roll  xdx  +/-Modifier  +Stat  MoveName  adv/dis**" + r +
                 "**xdx** - Dice Notation: the number and size of dice to roll, this tag may be included multiple times to roll different dice. When used multiple times, the adv/dis tags should immediately follow the dice to receive the effect, e.g. roll 2d6 adv 1d4. If no dice notation tags are included in a roll command, the default dice (set in the properties tab of the game spreadsheet) will be rolled."+r+r+
                 "**+/-Modifier** : any integer to be added to the sum of the rolls"+r+r+

@@ -1,6 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
-import java.util.*;
+import java.util.ArrayList;
 
 
 public class MoveBuilder {

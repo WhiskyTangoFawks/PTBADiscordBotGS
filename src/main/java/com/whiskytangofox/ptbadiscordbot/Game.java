@@ -20,7 +20,7 @@ import static com.whiskytangofox.ptbadiscordbot.App.logger;
 
 public class Game {
 
-    public Properties sheet_definitions = new Properties();
+    public Properties settings = new Properties();
 
     public PatriciaTrieIgnoreCase<MoveWrapper> basicMoves = new PatriciaTrieIgnoreCase<MoveWrapper>();
     public HashMapIgnoreCase<Playbook> playbooks = new HashMapIgnoreCase<Playbook>();
@@ -52,7 +52,7 @@ public class Game {
         sendDebugMsg("Google sheet retrieved");
         for (RangeWrapper tab : sheet){
             if (tab.tab.equalsIgnoreCase("properties"))  {
-                loadPropertiesTab(tab);
+                readPropertiesTab(tab);
             } else {
                 reader.parseSheet(tab);
             }
@@ -67,12 +67,12 @@ public class Game {
         }
     }
 
-    public void loadPropertiesTab(RangeWrapper tab){
+    public void readPropertiesTab(RangeWrapper tab){
         try {
             tab.getValueSet().stream()
                     .filter(Objects::nonNull)
                     .filter(prop -> prop.contains("="))
-                    .forEach(prop -> sheet_definitions.put(prop.split("=")[0], prop.split("=")[1]));
+                    .forEach(prop -> settings.put(prop.split("=")[0], prop.split("=")[1]));
             sendDebugMsg("Properties loaded");
         } catch (Exception e){
             sendGameMessage("Unexpected exception while trying to load properties");
@@ -110,8 +110,8 @@ public class Game {
         String msg = event.getMessage().getContentDisplay();
         String player = event.getAuthor().getName();
         try {
-            if (msg.startsWith(sheet_definitions.getProperty("commandchar"))) {// /alias string
-                msg = msg.toLowerCase().replace(sheet_definitions.getProperty("commandchar"), "");
+            if (msg.startsWith(settings.getProperty("commandchar"))) {// /alias string
+                msg = msg.toLowerCase().replace(settings.getProperty("commandchar"), "");
                 if (msg.replace(" ", "").equalsIgnoreCase("reloadgame")){
                     reloadGame();
                     sendGameMessage("Game successfully reloaded");

@@ -1,5 +1,7 @@
 /target/
 /properties/
 /properties/config.properties
-/tokens/StoredCredential
-/src/main/resources/credentials.json
+/src/main/resources/service_credentials.json
+/src/main/resources/procfile
+/src/main/resources/service_credentials.json
+/src/main/resources/system.properties
