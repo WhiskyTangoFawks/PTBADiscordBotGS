@@ -161,7 +161,7 @@ public class Game {
         return App.googleSheetAPI.getCellValue(sheetID, tab, cellRef);
     }
 
-    public int getStat(String author, String stat) throws IOException, DiscordBotException {
+    public StatWrapper getStat(String author, String stat) throws IOException, DiscordBotException {
         Playbook book = playbooks.get(author);
         String statRef = book.stats.get(stat).getCellRef();
         String penaltyRef = book.stat_penalties.get(stat).getCellRef();
@@ -173,65 +173,75 @@ public class Game {
         Integer intValue = null;
         try {
             intValue = Integer.parseInt(response.get(0));
-        } catch (NumberFormatException e){
-            throw new MissingValueException("Player: " + author + ", Stat:" + stat+ ", returned Not A Number, please correct your sheet");
+        } catch (NumberFormatException e) {
+            throw new MissingValueException("Player: " + author + ", Stat:" + stat + ", returned Not A Number, please correct your sheet");
         }
-
+        //todo - implement penalty as an addendum to the roll string instead of here
         boolean isDebilitated = Boolean.parseBoolean(response.get(1));
-        int penalty = isDebilitated ? 1 : 0;
-        return intValue - penalty;
+
+        return new StatWrapper(stat, intValue, isDebilitated, settings.getProperty("stat_debility_tag"));
     }
 
-    public boolean isStat(String player, String stat) throws PlayerNotFoundException {
+    public boolean isStat(String player, String stat) {
         Playbook book = playbooks.get(player);
-        if (book == null){
-            throw new PlayerNotFoundException("Unable to find a registered playbook for: "+ player);
+        if (book == null) {
+            return false;
         }
         return book.stats.containsKey(stat);
     }
 
     public Collection<String> getRegisteredStatsForPlayer(String player) throws PlayerNotFoundException {
         Playbook book = playbooks.get(player);
-        if (book == null){
-            throw new PlayerNotFoundException("No playbook registered to "+ player);
+        if (book == null) {
+            throw new PlayerNotFoundException("No playbook registered to " + player);
         }
         return book.stats.keySet();
     }
 
-   public boolean isResource(String player, String resource) throws PlayerNotFoundException {
-        return getPlaybook(player).resources.containsKey(resource);
+    public boolean isResource(String player, String resource) {
+        try {
+            return getPlaybook(player).resources.containsKey(resource);
+        } catch (PlayerNotFoundException e) {
+            return false;
+        }
     }
 
     public SetResourceResult modifyResource(String player, String resource, int mod) throws PlayerNotFoundException, IOException {
         Playbook book = getPlaybook(player);
-        List<CellRef> cells = book.resources.get(resource);
-        List<String> refs = cells.stream().map(c -> c.getCellRef()).collect(Collectors.toList());
+        ResourceWrapper res = book.resources.get(resource);
+        List<CellRef> cells = res.getList();
+        List<String> refs = cells.stream().map(CellRef::getCellRef).collect(Collectors.toList());
         List<String> values = googleSheetAPI.getValues(sheetID, book.tab, refs);
-            int oldValue = 0;
+        int oldValue = 0;
         int newValue = 0;
-        if (values.size() == 1 && ParsedCommand.isInteger(values.get(0))){
+        if (values.size() == 1 && ParsedCommand.isInteger(values.get(0))) {
             oldValue = Integer.parseInt(values.get(0));
             newValue = oldValue + mod;
+            if (res.max != null && newValue > res.max) {
+                newValue = res.max;
+            } else if (res.min != null && newValue < res.min) {
+                newValue = res.min;
+            }
             values.set(0, String.valueOf(newValue));
             if (mod != 0) {
                 googleSheetAPI.setValues(sheetID, book.tab, refs, values);
             }
-        }else if (values.get(0).equalsIgnoreCase("true") || values.get(0).equalsIgnoreCase("true")){
-            oldValue = (int)values.stream().filter(v -> v.equalsIgnoreCase("true")).count();
+        } else if (values.get(0).equalsIgnoreCase("true") || values.get(0).equalsIgnoreCase("false")) {
+            oldValue = (int) values.stream().filter(v -> v.equalsIgnoreCase("true")).count();
             if (mod != 0) {
                 //for a positive, iterate up, for a negative, iterate down
                 boolean isModPos = mod > 0;
                 int counter = 0;
                 if (isModPos) {
                     for (int i = 0; counter < mod && i < values.size(); i++) {
-                        if (values.get(i) == "FALSE") {
+                        if (values.get(i).equalsIgnoreCase("FALSE")) {
                             values.set(i, "TRUE");
                             counter++;
                         }
                     }
                 } else { //modIsNegative
                     for (int i = values.size()-1; counter < Math.abs(mod) && i >= 0; i--) {
-                        if (values.get(i) == "TRUE") {
+                        if (values.get(i).equalsIgnoreCase("TRUE")) {
                             values.set(i, "FALSE");
                             counter++;
                         }

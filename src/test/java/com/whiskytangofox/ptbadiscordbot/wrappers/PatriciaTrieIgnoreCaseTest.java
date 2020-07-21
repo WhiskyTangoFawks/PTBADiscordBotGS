@@ -1,9 +1,8 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
-import com.whiskytangofox.ptbadiscordbot.wrappers.PatriciaTrieIgnoreCase;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 public class PatriciaTrieIgnoreCaseTest {
 
@@ -11,10 +10,10 @@ public class PatriciaTrieIgnoreCaseTest {
 
     @Test
     public void put() {
-        PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<String>();
+        PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<>();
         test.put("key1", "value1");
         assertTrue(test.containsValue("value1"));
-        assertTrue(test.keySet().contains("key1"));
+        assertTrue(test.containsKey("key1"));
 
     }
 
@@ -23,7 +22,7 @@ public class PatriciaTrieIgnoreCaseTest {
         PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<String>();
         test.put("KEY1", "value1");
         assertTrue(test.containsValue("value1"));
-        assertTrue(test.keySet().contains("key1"));
+        assertTrue(test.containsKey("key1"));
 
     }
 
@@ -32,7 +31,7 @@ public class PatriciaTrieIgnoreCaseTest {
         PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<String>();
         test.put("KEY 1", "value1");
         assertTrue(test.containsValue("value1"));
-        assertTrue(test.keySet().contains("key1"));
+        assertTrue(test.containsKey("key1"));
 
     }
 
@@ -57,29 +56,30 @@ public class PatriciaTrieIgnoreCaseTest {
         assertTrue(test.getClosestMatch("Key").equals("value1"));
 
     }
+
     @Test
-    public void getPartialKeyConflict() throws Exception {
+    public void getPartialKeyConflict() {
         PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<String>();
         test.put("key1", "value1");
         test.put("Key2", "value2");
         boolean thrown = false;
         try {
             test.getClosestMatch("K");
-        } catch (Exception e){
+        } catch (Exception e) {
             thrown = true;
         }
         assertTrue(thrown);
     }
 
     @Test
-    public void putPartialKeyConflict() throws Exception {
+    public void putPartialKeyConflict() {
         PatriciaTrieIgnoreCase<String> test = new PatriciaTrieIgnoreCase<String>();
         test.put("key11", "value1");
         test.put("Key12", "value2");
         boolean thrown = false;
         try {
             test.getClosestMatch("K");
-        } catch (Exception e){
+        } catch (Exception e) {
             thrown = true;
         }
         assertTrue(thrown);

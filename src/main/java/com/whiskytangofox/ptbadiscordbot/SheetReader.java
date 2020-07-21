@@ -5,11 +5,11 @@ import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
 import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
+import com.whiskytangofox.ptbadiscordbot.wrappers.ResourceWrapper;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SheetReader {
@@ -40,13 +40,13 @@ public class SheetReader {
                             MoveWrapper move;
                             String statName;
 
-                            switch (Metadata.valueOf(note.split(":")[0])) {
+                            switch (Metadata.valueOf(note.split(";")[0].split("=")[0])) {
                                 case basic_move:
                                     builder = parseMove(sheet, i, j);
                                     if (builder != null) {
                                         move = builder.getMove();
                                         game.basicMoves.put(move.name, move);
-                                        game.sendDebugMsg("Loaded basic move: "+ move.name);
+                                        game.sendDebugMsg("Loaded basic move: " + move.name);
                                     }
                                     break;
                                 case playbook_move:
@@ -54,38 +54,58 @@ public class SheetReader {
                                     if (builder != null) {
                                         move = builder.getMove();
                                         playbook.moves.put(move.name, move);
-                                        game.sendDebugMsg("Loaded playbook move: "+ move.name);
+                                        game.sendDebugMsg("Loaded playbook move: " + move.name);
                                     }
                                     break;
                                 case stat:
-                                    statName = note.replace(Metadata.stat.name() + ":", "").toLowerCase();
+                                    statName = note.replace(Metadata.stat.name() + "=", "").toLowerCase();
                                     playbook.stats.put(statName, new CellRef(i, j));
-                                    game.sendDebugMsg("Loaded stat: "+ statName);
+                                    game.sendDebugMsg("Loaded stat: " + statName);
                                 case stat_penalty:
-                                    String stats = note.replace(Metadata.stat_penalty.name() + ":", "");
-                                    String statNames[] = stats.split(",");
+                                    String stats = note.replace(Metadata.stat_penalty.name() + "=", "");
+                                    String[] statNames = stats.split(",");
                                     for (String stat : statNames) {
                                         playbook.stat_penalties.put(stat, new CellRef(i, j));
-                                        game.sendDebugMsg("Loaded stat penalty: "+ stat);
+                                        game.sendDebugMsg("Loaded stat penalty: " + stat);
                                     }
                                     break;
                                 case resource:
-                                    String resourceName = note.replace(Metadata.resource.name() + ":", "").toLowerCase();
-                                    if (playbook.resources.containsKey(resourceName)){
-                                        playbook.resources.get(resourceName).add(new CellRef(i, j));
-                                    } else {
-                                        ArrayList<CellRef> list = new ArrayList<CellRef>();
-                                        list.add(new CellRef(i, j));
-                                        playbook.resources.put(resourceName, list);
+                                    String resourceName = null;
+                                    Integer min = null;
+                                    Integer max = null;
+                                    for (String parameter : note.split(";")) {
+                                        if (parameter.split("=")[0].equalsIgnoreCase(Metadata.resource.name())) {
+                                            resourceName = parameter.split("=")[1];
+                                        } else if (parameter.split("=")[0].equalsIgnoreCase("min")) {
+                                            min = Integer.parseInt(parameter.split("=")[1]);
+                                        } else if (parameter.split("=")[0].equalsIgnoreCase("max")) {
+                                            max = Integer.parseInt(parameter.split("=")[1]);
+                                        }
                                     }
-                                    game.sendDebugMsg("Loaded resource: "+ resourceName);
+                                    int size = 0;
+                                    if (playbook.resources.containsKey(resourceName)) {
+                                        playbook.resources.get(resourceName).add(new CellRef(i, j));
+                                        size = playbook.resources.get(resourceName).size();
+
+                                    } else {
+                                        playbook.resources.put(resourceName, new ResourceWrapper(new CellRef(i, j)));
+                                        size = 1;
+                                    }
+                                    if (min != null) {
+                                        playbook.resources.get(resourceName).min = min;
+                                    }
+                                    if (max != null) {
+                                        playbook.resources.get(resourceName).max = max;
+                                    }
+                                    game.sendDebugMsg("Loaded resource: " + resourceName + " x" + size);
+
                                     break;
                                 case default_dice:
                                     String value = sheet.getValue(i, j);
                                     for (String parameter : value.split(" ")) {
                                         if (ParsedCommand.isDieNotation(parameter)) {
-                                            playbook.moveOverrideDice.put(note.split(":")[1], parameter);
-                                            game.sendDebugMsg("Loaded default dice for "+ note.split(":")[1] + " : " + parameter);
+                                            playbook.moveOverrideDice.put(note.split("=")[1], parameter);
+                                            game.sendDebugMsg("Loaded default dice for " + note.split("=")[1] + " : " + parameter);
                                         }
                                     }
                                     break;
@@ -127,17 +147,19 @@ public class SheetReader {
 
     public MoveBuilder parseMove(RangeWrapper sheet, int i, int j) {
         String note = sheet.getNote(i, j);
-        Boolean isList = false;
+        boolean isList = false;
         if (sheet.getNote(i, j) != null && !sheet.getNote(i, j).isBlank()){
             String noteName = null;
             String noteText = null;
-            for (String parameter : note.split(":")) {
+            for (String parameter : note.split(";")) {
                 String tag = parameter.split("=")[0];
-                if (tag.equalsIgnoreCase("name")) {
-                    noteName = parameter.split("=")[1];
+                if (tag.equalsIgnoreCase(Metadata.playbook_move.name()) || tag.equalsIgnoreCase(Metadata.basic_move.name())) {
+                    if (parameter.contains("=")) {
+                        noteName = parameter.split("=")[1];
+                    }
                 } else if (tag.equalsIgnoreCase("text")) {
-                    noteText =  parameter.split("=")[1];
-                } else if (tag.equalsIgnoreCase("list")){
+                    noteText = parameter.split("=")[1];
+                } else if (tag.equalsIgnoreCase("list")) {
                     isList = true;
                 }
             }
@@ -202,12 +224,12 @@ public class SheetReader {
         MoveBuilder builder = new MoveBuilder();
         String name = null;
         String text = null;
-        for (String parameter : note.split(":")) {
-            String [] split = parameter.split("=");
-            if (parameter.split("=")[0].equalsIgnoreCase("name")) {
-                name = parameter.split("=")[1];
-            } else if (parameter.split("=")[0].equalsIgnoreCase("text")) {
-                text =  parameter.split("=")[1];
+        for (String parameter : note.split(";")) {
+            String[] split = parameter.split("=");
+            if (split[0].equalsIgnoreCase(Metadata.playbook_move.name()) || split[0].equalsIgnoreCase(Metadata.basic_move.name())) {
+                name = split[1];
+            } else if (split[0].equalsIgnoreCase("text")) {
+                text = split[1];
             }
         }
         builder.addLine();

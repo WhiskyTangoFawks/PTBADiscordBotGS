@@ -49,7 +49,6 @@ public class Dice {
            msg = msg+ " " + modSign + mod;
        }
        msg = msg+"  =  "+sum;
-       //TODO - implement property to disable reminder for non-PTBA games
        if (failMsg && sum < 7){
            msg = msg + System.lineSeparator() + "*Don't forget to mark EXP on a 6-*";
        }
@@ -57,11 +56,11 @@ public class Dice {
     }
 
     private static int getSum(ArrayList<Integer> nums){
-       int sum = 0;
-       for (int i = 0; i< nums.size(); i++){
-           sum=sum+nums.get(i);
-       }
-       return sum;
+        int sum = 0;
+        for (Integer num : nums) {
+            sum = sum + num;
+        }
+        return sum;
     }
 
     private static String dropLowAndStrikeThru(ArrayList<Integer> rolls, String msg, boolean adv, boolean dis){

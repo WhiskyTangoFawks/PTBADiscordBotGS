@@ -1,21 +1,18 @@
 package com.whiskytangofox.ptbadiscordbot.googlesheet;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.*;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,7 +110,7 @@ public class GoogleSheetAPI {
 
     public List<String> getValues(String sheetID, String tab, List<String> range) throws IOException {
         ArrayList<String> ranges = new ArrayList<String>();
-        range.stream().forEach(ref ->ranges.add((tab+"!"+ref)));
+        range.stream().forEach(ref -> ranges.add((tab + "!" + ref)));
         Sheets.Spreadsheets.Get request = service.spreadsheets().get(sheetID);
         request.setRanges(ranges);
         request.setFields("sheets/data/rowData/values/formattedValue");
@@ -123,17 +120,40 @@ public class GoogleSheetAPI {
                 .collect(Collectors.toList());
     }
 
-    public void setValues(String sheetID, String tab, List<String> cells, List<String> value) throws IOException {
-        List<String> ranges = cells.stream().map(c->c+":"+c).collect(Collectors.toList());
-        //String valueRenderOption = ""; // TODO: Update placeholder value.
+    public void setValues(String sheetID, String tab, List<String> cells, List<String> values) throws IOException {
+        List<String> ranges = cells.stream().map(c -> tab + "!" + c + ":" + c).collect(Collectors.toList());
 
-        Sheets.Spreadsheets.Values.BatchGet request =
-                service.spreadsheets().values().batchGet(sheetID);
-        request.setRanges(ranges);
-        //request.setValueRenderOption(valueRenderOption);
-        //request.setDateTimeRenderOption(dateTimeRenderOption);
+        // How the input data should be interpreted.
+        String valueInputOption = "RAW";
 
-        BatchGetValuesResponse response = request.execute();
+        // The new values to apply to the spreadsheet.
+        List<ValueRange> dataSet = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++) {
+            ValueRange data = new ValueRange();
+            data.setRange(ranges.get(i));
+            List<List<Object>> list = new ArrayList<>();
+            List<Object> list2 = new ArrayList<>();
+            Object value = values.get(i);
+            if (values.get(i).equalsIgnoreCase("true")) {
+                value = true;
+            } else if (values.get(i).equalsIgnoreCase("false")) {
+                value = false;
+            }
+            list2.add(value);
+            list.add(list2);
+            data.setValues(list);
+            dataSet.add(data);
+        }
+
+        BatchUpdateValuesRequest requestBody = new BatchUpdateValuesRequest();
+        requestBody.setValueInputOption(valueInputOption);
+        requestBody.setData(dataSet);
+
+
+        Sheets.Spreadsheets.Values.BatchUpdate request =
+                service.spreadsheets().values().batchUpdate(sheetID, requestBody);
+
+        BatchUpdateValuesResponse response = request.execute();
     }
 
 }

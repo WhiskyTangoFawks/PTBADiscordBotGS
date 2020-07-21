@@ -1,7 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
-import com.whiskytangofox.ptbadiscordbot.Game;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
+import com.whiskytangofox.ptbadiscordbot.Game;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -13,7 +13,7 @@ import org.mockito.junit.MockitoRule;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 

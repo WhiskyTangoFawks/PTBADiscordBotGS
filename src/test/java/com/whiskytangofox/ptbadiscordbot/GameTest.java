@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -35,7 +36,7 @@ public class GameTest {
     static GoogleSheetAPI mockApi;
 
     @BeforeClass
-    public static void beforeClass(){
+    public static void beforeClass() {
         logger.info("Running @BeforeClass Setup");
 
         basicBuilder = new MoveBuilder();
@@ -59,7 +60,7 @@ public class GameTest {
     }
 
     @Before
-    public void before(){
+    public void before() {
         MockitoAnnotations.initMocks(this);
     }
 
@@ -105,7 +106,7 @@ public class GameTest {
     }
 
     @Test
-    public void testCopyAndStoreModifiedBasicMoves(){
+    public void testCopyAndStoreModifiedBasicMoves() {
         MoveWrapper basicMove = basicBuilder.getMove();
         game.basicMoves.put(basicMove.name, basicMove);
 
@@ -122,7 +123,7 @@ public class GameTest {
     }
 
     @Test
-    public void testCopyAndStoreModifiedBasicMoves_ConcurrentModException(){
+    public void testCopyAndStoreModifiedBasicMoves_ConcurrentModException() {
         MoveWrapper basicMove = basicBuilder.getMove();
         game.basicMoves.put(basicMove.name, basicMove);
         game.basicMoves.put("filler1", new MoveWrapper("filler1", "text"));
@@ -160,7 +161,7 @@ public class GameTest {
     }
 
     @Test
-    public void testIsStat() throws PlayerNotFoundException {
+    public void testIsStat() {
         Playbook book = new Playbook("test");
         book.player = "test";
         book.stats.put("str", new CellRef("A1"));
@@ -187,8 +188,8 @@ public class GameTest {
         cells.add("A1");
         cells.add("A2");
         when(App.googleSheetAPI.getValues(null, "test", cells)).thenReturn(mockValues);
-
-        assertEquals(2, game.getStat("test", "str"));
+        StatWrapper result = game.getStat("test", "str");
+        assertEquals(2, result.modStat);
     }
 
     @Test
@@ -219,21 +220,19 @@ public class GameTest {
     }
 
     @Test
-    public void testIsResource() throws PlayerNotFoundException {
+    public void testIsResource() {
         Playbook book = new Playbook("test");
-        book.resources.put("hp", new ArrayList<CellRef>());
+        book.resources.put("hp", new ResourceWrapper(new CellRef("A1")));
         game.playbooks.put("test1", book);
         assertTrue(game.playbooks.containsKey("test1"));
         assertTrue(game.playbooks.get("test1").resources.containsKey("hp"));
-        assertEquals(true, game.isResource("test1", "hp"));
+        assertTrue(game.isResource("test1", "hp"));
     }
 
     @Test
     public void testModifyResource_Integer_NoChange() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        ArrayList<CellRef> list = new ArrayList();
-        list.add(new CellRef("A1"));
-        book.resources.put("hp", list);
+        book.resources.put("hp", new ResourceWrapper(new CellRef("A1")));
         game.playbooks.put("test1", book);
         ArrayList<String> mockResult = new ArrayList();
         mockResult.add("10");
@@ -248,9 +247,7 @@ public class GameTest {
     @Test
     public void testModifyResource_Integer_Change() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        ArrayList<CellRef> cellRefs = new ArrayList();
-        cellRefs.add(new CellRef("A1"));
-        book.resources.put("hp", cellRefs);
+        book.resources.put("hp", new ResourceWrapper(new CellRef("A1")));
         game.playbooks.put("test1", book);
         ArrayList<String> sheetValues = new ArrayList();
         sheetValues.add("10");
@@ -263,14 +260,51 @@ public class GameTest {
     }
 
     @Test
+    public void testModifyResource_Integer_ChangeMax() throws IOException, PlayerNotFoundException {
+        Playbook book = new Playbook("test");
+        ResourceWrapper resource = new ResourceWrapper(new CellRef("A1"));
+        resource.min = 0;
+        resource.max = 20;
+        book.resources.put("hp", resource);
+        game.playbooks.put("test1", book);
+        ArrayList<String> sheetValues = new ArrayList();
+        sheetValues.add("10");
+        when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
+        SetResourceResult result = game.modifyResource("test1", "hp", 20);
+        assertEquals(20, result.mod);
+        assertEquals(10, result.oldValue);
+        assertEquals(20, result.newValue);
+        verify(App.googleSheetAPI, times(1)).setValues(any(), any(), any(), any());
+    }
+
+    @Test
+    public void testModifyResource_Integer_ChangeMin() throws IOException, PlayerNotFoundException {
+        Playbook book = new Playbook("test");
+        ResourceWrapper resource = new ResourceWrapper(new CellRef("A1"));
+        resource.min = 0;
+        resource.max = 20;
+        book.resources.put("hp", resource);
+        game.playbooks.put("test1", book);
+        ArrayList<String> sheetValues = new ArrayList();
+        sheetValues.add("10");
+        when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
+        SetResourceResult result = game.modifyResource("test1", "hp", -20);
+        assertEquals(-20, result.mod);
+        assertEquals(10, result.oldValue);
+        assertEquals(0, result.newValue);
+        verify(App.googleSheetAPI, times(1)).setValues(any(), any(), any(), any());
+    }
+
+
+    @Test
     public void testModifyResource_Checklist_NoChange() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        String[] cellRefs = {"A1", "A2", "A3","A4", "A5"};
+        String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
-                .map(c -> new CellRef(c)).collect(Collectors.toList())); ;
-        book.resources.put("hp", listCellRefs);
+                .map(c -> new CellRef(c)).collect(Collectors.toList()));
+        book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
-        String[] arrValues= {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
+        String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
@@ -278,7 +312,7 @@ public class GameTest {
         assertEquals(0, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(3, result.newValue);
-        String[] expectedArr= {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
+        String[] expectedArr = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
         verify(App.googleSheetAPI, times(0))
                 .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
@@ -287,12 +321,13 @@ public class GameTest {
     @Test
     public void testModifyResource_Checklist_PosChange() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        String[] cellRefs = {"A1", "A2", "A3","A4", "A5"};
-        ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
-                .map(c -> new CellRef(c)).collect(Collectors.toList())); ;
-        book.resources.put("hp", listCellRefs);
+        String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
+        ArrayList<CellRef> listCellRefs = Arrays.asList(cellRefs).stream()
+                .map(CellRef::new).collect(Collectors.toCollection((Supplier<ArrayList>) ArrayList::new));
+
+        book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
-        String[] arrValues= {"TRUE", "TRUE", "FALSE", "FALSE", "FALSE"};
+        String[] arrValues = {"TRUE", "TRUE", "FALSE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
@@ -300,7 +335,7 @@ public class GameTest {
         assertEquals(2, result.mod);
         assertEquals(2, result.oldValue);
         assertEquals(4, result.newValue);
-        String[] expectedArr= {"TRUE", "TRUE", "TRUE", "TRUE", "FALSE"};
+        String[] expectedArr = {"TRUE", "TRUE", "TRUE", "TRUE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
         verify(App.googleSheetAPI, times(1))
                 .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
@@ -309,12 +344,14 @@ public class GameTest {
     @Test
     public void testModifyResource_Checklist_NegChange() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        String[] cellRefs = {"A1", "A2", "A3","A4", "A5"};
-        ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
-                .map(c -> new CellRef(c)).collect(Collectors.toList())); ;
-        book.resources.put("hp", listCellRefs);
+        String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
+        ArrayList<CellRef> listCellRefs = Arrays.stream(cellRefs)
+                .map(CellRef::new)
+                .collect(Collectors.toCollection((Supplier<ArrayList>) ArrayList::new));
+
+        book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
-        String[] arrValues= {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
+        String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
@@ -322,7 +359,7 @@ public class GameTest {
         assertEquals(-2, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(1, result.newValue);
-        String[] expectedArr= {"TRUE", "FALSE", "FALSE", "FALSE", "FALSE"};
+        String[] expectedArr = {"TRUE", "FALSE", "FALSE", "FALSE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
         verify(App.googleSheetAPI, times(1))
                 .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
@@ -331,12 +368,13 @@ public class GameTest {
     @Test
     public void testModifyResource_Checklist_NegChangeLimited() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        String[] cellRefs = {"A1", "A2", "A3","A4", "A5"};
+        String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
-                .map(c -> new CellRef(c)).collect(Collectors.toList())); ;
-        book.resources.put("hp", listCellRefs);
+                .map(c -> new CellRef(c)).collect(Collectors.toList()));
+
+        book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
-        String[] arrValues= {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
+        String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
@@ -344,7 +382,7 @@ public class GameTest {
         assertEquals(-4, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(0, result.newValue);
-        String[] expectedArr= {"FALSE", "FALSE", "FALSE", "FALSE", "FALSE"};
+        String[] expectedArr = {"FALSE", "FALSE", "FALSE", "FALSE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
         verify(App.googleSheetAPI, times(1))
                 .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
@@ -353,20 +391,22 @@ public class GameTest {
     @Test
     public void testModifyResource_Checklist_PosChangeLimited() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
-        String[] cellRefs = {"A1", "A2", "A3","A4", "A5"};
-        ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
-                .map(c -> new CellRef(c)).collect(Collectors.toList())); ;
-        book.resources.put("hp", listCellRefs);
+        String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
+        ArrayList<CellRef> listCellRefs = Arrays.stream(cellRefs)
+                .map(CellRef::new)
+                .collect(Collectors.toCollection((Supplier<ArrayList>) ArrayList::new));
+
+        book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
-        String[] arrValues= {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
+        String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(App.googleSheetAPI.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResult result = game.modifyResource("test1", "hp",10);
+        SetResourceResult result = game.modifyResource("test1", "hp", 10);
         assertEquals(10, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(5, result.newValue);
-        String[] expectedArr= {"TRUE", "TRUE", "TRUE", "TRUE", "TRUE"};
+        String[] expectedArr = {"TRUE", "TRUE", "TRUE", "TRUE", "TRUE"};
         List<String> expectedList = Arrays.asList(expectedArr);
         verify(App.googleSheetAPI, times(1))
                 .setValues(null, "test", Arrays.asList(cellRefs), expectedList);

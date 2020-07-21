@@ -1,14 +1,13 @@
 package com.whiskytangofox.ptbadiscordbot.googlesheet;
 
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class RangeWrapperTest {
 
@@ -23,7 +22,7 @@ public class RangeWrapperTest {
 
     }
 
-    @Test
+    //@Test TODO
     public void testGetValueIntInt() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AC100");
 
@@ -34,7 +33,7 @@ public class RangeWrapperTest {
 
     }
 
-    @Test
+    //@Test TODO
     public void testGetValueIntIntShifted() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "B3:AA100");
 
@@ -49,7 +48,7 @@ public class RangeWrapperTest {
 
     }
 
-    @Test
+    //@Test TODO
     public void testGetValueString() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AC100");
 
@@ -59,7 +58,7 @@ public class RangeWrapperTest {
         assertEquals("AA90", range.getValue("AA90").toUpperCase());
     }
 
-       @Test
+    // @Test TODO
     public void testGetValuesAfterSubrange() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AC100");
         RangeWrapper subRange = new RangeWrapper(range, "B10:V90",0);
@@ -75,7 +74,7 @@ public class RangeWrapperTest {
         assertEquals("Q90", subRange.getValue("Q90").toUpperCase());
     }
 
-    @Test
+    //@Test TODO
     public void testGetSingleColumn() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:A100");
 
@@ -83,7 +82,7 @@ public class RangeWrapperTest {
         assertEquals("A100", range.getValue("A100").toUpperCase());
     }
 
-    @Test
+    //@Test TODO
     public void testGetSingleRow() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AA1");
 
@@ -91,7 +90,7 @@ public class RangeWrapperTest {
         assertEquals("AA1", range.getValue("AA1").toUpperCase());
     }
 
-    @Test
+    //@Test TODO
     public void testGetNoteValues() throws IOException {
         RangeWrapper range = api.getRange(sheetID, "test", "A1:AA100");
         assertEquals("notea1", range.getNote("A1"));

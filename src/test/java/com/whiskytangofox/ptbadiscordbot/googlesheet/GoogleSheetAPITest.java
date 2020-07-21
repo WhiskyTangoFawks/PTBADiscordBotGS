@@ -1,17 +1,10 @@
 package com.whiskytangofox.ptbadiscordbot.googlesheet;
 
-import com.google.api.services.sheets.v4.Sheets;
-import com.google.api.services.sheets.v4.model.*;
 import com.whiskytangofox.ptbadiscordbot.App;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class GoogleSheetAPITest {
 
@@ -41,6 +34,18 @@ public class GoogleSheetAPITest {
         //List<String> list = api.getValues(sheetID, tab, "C23", "A2");
         //assertEquals("c23", list.get(0));
         //assertEquals("a2", list.get(1));
+    }
+
+    //@Test
+    public void devSpike_setValues() throws IOException, GeneralSecurityException {
+        GoogleSheetAPI api = new GoogleSheetAPI();
+        ArrayList<String> cells = new ArrayList<String>();
+        cells.add("B6");
+        cells.add("A1");
+        ArrayList<String> values = new ArrayList<String>();
+        values.add("B6");
+        values.add("A1");
+        api.setValues(sheetID, "writetest", cells, values);
     }
 
 }

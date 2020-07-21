@@ -1,12 +1,12 @@
 package com.whiskytangofox.ptbadiscordbot.wrappers;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashSet;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class MoveWrapperTest {
 
@@ -38,13 +38,13 @@ public class MoveWrapperTest {
     @Test
     public void getMoveStatNoStat() {
         MoveWrapper wrapper = new MoveWrapper("test", "test text roll +BLARG");
-        assertEquals(null, wrapper.getMoveStat(stats));
+        assertNull(wrapper.getMoveStat(stats));
     }
 
     @Test
     public void getMoveStatNoRoll() {
         MoveWrapper wrapper = new MoveWrapper("test", "test text +str");
-        assertEquals(null, wrapper.getMoveStat(stats));
+        assertNull(wrapper.getMoveStat(stats));
     }
 
 

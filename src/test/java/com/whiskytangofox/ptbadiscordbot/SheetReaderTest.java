@@ -61,6 +61,7 @@ public class SheetReaderTest {
         game.playbooks = new HashMapIgnoreCase<>();
         game.basicMoves = new PatriciaTrieIgnoreCase<>();
         reader = new SheetReader(game);
+
     }
 
     @Test
@@ -146,7 +147,7 @@ public class SheetReaderTest {
         values.put(new CellRef("A1"), "test playbook1");
 
         values.put(new CellRef("A2"), "+2");
-        notes.put(new CellRef("A2"), SheetReader.Metadata.stat.name() + ":str");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.stat.name() + "=str");
 
         values.put(new CellRef("B1"), "discordName");
         notes.put(new CellRef("B1"), SheetReader.Metadata.discord_name.name());
@@ -163,7 +164,7 @@ public class SheetReaderTest {
         values.put(new CellRef("A1"), "test playbook1");
 
         values.put(new CellRef("A2"), "FALSE");
-        notes.put(new CellRef("A2"), SheetReader.Metadata.stat_penalty.name() + ":str, dex");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.stat_penalty.name() + "=str, dex");
 
         values.put(new CellRef("B1"), "discordName");
         notes.put(new CellRef("B1"), SheetReader.Metadata.discord_name.name());
@@ -176,12 +177,12 @@ public class SheetReaderTest {
     }
 
     @Test
-    public void testReadSheetResource_Single(){
+    public void testReadSheetResource_Single() {
         notes.put(new CellRef("A1"), SheetReader.Metadata.new_playbook.name());
         values.put(new CellRef("A1"), "test playbook1");
 
         values.put(new CellRef("A2"), "12");
-        notes.put(new CellRef("A2"), SheetReader.Metadata.resource.name() + ":hp");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.resource.name() + "=hp");
 
         values.put(new CellRef("B1"), "discordName");
         notes.put(new CellRef("B1"), SheetReader.Metadata.discord_name.name());
@@ -190,11 +191,52 @@ public class SheetReaderTest {
         Playbook book = game.playbooks.get("discordName");
         assertNotNull(book);
         assertEquals("A2", book.resources.get("hp").get(0).getCellRef());
+        assertNull(book.resources.get("hp").min);
+        assertNull(book.resources.get("hp").max);
     }
 
     @Test
-    public void testReadSheetResource_List(){
-        //TODO
+    public void testReadSheetResource_MinMax() {
+        notes.put(new CellRef("A1"), SheetReader.Metadata.new_playbook.name());
+        values.put(new CellRef("A1"), "test playbook1");
+
+        values.put(new CellRef("A2"), "12");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.resource.name() + "=hp;min=0;max=20");
+
+        values.put(new CellRef("B1"), "discordName");
+        notes.put(new CellRef("B1"), SheetReader.Metadata.discord_name.name());
+        reader.parseSheet(sheet);
+
+        Playbook book = game.playbooks.get("discordName");
+        assertNotNull(book);
+        assertEquals("A2", book.resources.get("hp").get(0).getCellRef());
+        assertEquals(Integer.valueOf(0), book.resources.get("hp").min);
+        assertEquals(Integer.valueOf(20), book.resources.get("hp").max);
+    }
+
+    @Test
+    public void testReadSheetResource_List() {
+        notes.put(new CellRef("A1"), SheetReader.Metadata.new_playbook.name());
+        values.put(new CellRef("A1"), "test playbook1");
+
+        values.put(new CellRef("A2"), "TRUE");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.resource.name() + "=xp");
+        values.put(new CellRef("A3"), "TRUE");
+        notes.put(new CellRef("A3"), SheetReader.Metadata.resource.name() + "=xp");
+        values.put(new CellRef("A4"), "TRUE");
+        notes.put(new CellRef("A4"), SheetReader.Metadata.resource.name() + "=xp");
+        values.put(new CellRef("B3"), "TRUE");
+        notes.put(new CellRef("B3"), SheetReader.Metadata.resource.name() + "=xp");
+        values.put(new CellRef("B4"), "TRUE");
+        notes.put(new CellRef("B4"), SheetReader.Metadata.resource.name() + "=xp");
+
+        values.put(new CellRef("B1"), "discordName");
+        notes.put(new CellRef("B1"), SheetReader.Metadata.discord_name.name());
+        reader.parseSheet(sheet);
+
+        Playbook book = game.playbooks.get("discordName");
+        assertNotNull(book);
+        assertEquals(5, book.resources.get("XP").size());
     }
 
     @Test
@@ -203,7 +245,7 @@ public class SheetReaderTest {
         values.put(new CellRef("A1"), "test playbook1");
 
         values.put(new CellRef("A2"), "damage 1d10");
-        notes.put(new CellRef("A2"), SheetReader.Metadata.default_dice.name() + ":Move Name");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.default_dice.name() + "=Move Name");
 
         values.put(new CellRef("B1"), "discordName");
         notes.put(new CellRef("B1"), SheetReader.Metadata.discord_name.name());
@@ -232,7 +274,7 @@ public class SheetReaderTest {
     }
     @Test
     public void testParseMoveFromNote(){
-        String note = "playbook_move:name=Override:text=+1 Readiness when you roll Defend 7+";
+        String note = "playbook_move=Override;text=+1 Readiness when you roll Defend 7+";
         MoveBuilder builder = reader.parseMoveFromNote(note);
         assertEquals("Override", builder.get(0));
         assertEquals("+1 Readiness when you roll Defend 7+", builder.get(1));
@@ -241,7 +283,7 @@ public class SheetReaderTest {
     @Test
     public void testParseMoveNoteOverrideTitle(){
         values.put(new CellRef("A1"), "move text");
-        notes.put(new CellRef("A1"), "playbook_move:name=Move Name");
+        notes.put(new CellRef("A1"), "playbook_move=Move Name");
 
         MoveBuilder builder = reader.parseMove(sheet, 1, 1);
         assertEquals("Move Name", builder.get(0));
@@ -251,7 +293,7 @@ public class SheetReaderTest {
     @Test
     public void testParseMoveNoteOverrideText(){
         values.put(new CellRef("A1"), "Move Name");
-        notes.put(new CellRef("A1"), "playbook_move:text=move text");
+        notes.put(new CellRef("A1"), "playbook_move;text=move text");
 
         MoveBuilder builder = reader.parseMove(sheet, 1, 1);
         assertEquals("Move Name", builder.get(0));
@@ -263,7 +305,7 @@ public class SheetReaderTest {
     public void testParseMoveNoteOverrideTitleAndName(){
         values.put(new CellRef("A1"), "TRUE");
         values.put(new CellRef("B1"), "Shield (+1 Armor; +1 Readiness when you roll Defend 7+)");
-        notes.put(new CellRef("A1"), "playbook_move:name=Override:text=+1 Readiness when you roll Defend 7+");
+        notes.put(new CellRef("A1"), "playbook_move=Override;text=+1 Readiness when you roll Defend 7+");
         values.put(new CellRef("A2"), "Not part of the move");
 
         MoveBuilder builder = reader.parseMove(sheet, 1, 1);
@@ -278,7 +320,7 @@ public class SheetReaderTest {
 
         values.put(new CellRef("A2"), "TRUE");
         values.put(new CellRef("B3"), "Shield (+1 Armor; +1 Readiness when you roll Defend 7+)");
-        notes.put(new CellRef("A2"), SheetReader.Metadata.playbook_move.name()+":name=Override:text=+1 Readiness when you roll Defend 7+");
+        notes.put(new CellRef("A2"), SheetReader.Metadata.playbook_move.name() + "=Override;text=+1 Readiness when you roll Defend 7+");
         values.put(new CellRef("A3"), "Not part of the move");
 
         values.put(new CellRef("C1"), "discordName");
@@ -337,7 +379,7 @@ public class SheetReaderTest {
 
     @Test
     public void testParseMoveList(){
-        notes.put(new CellRef("A1"), "basic_move:list");
+        notes.put(new CellRef("A1"), "basic_move;list");
         values.put(new CellRef("A1"), "test basic move");
         values.put(new CellRef("A2"), "text 1");
         values.put(new CellRef("A3"), "text 2");
@@ -351,7 +393,7 @@ public class SheetReaderTest {
 
     @Test
     public void testParseMoveBooleanTextTrueAndFalse(){
-        notes.put(new CellRef("A1"), "basic_move:list");
+        notes.put(new CellRef("A1"), "basic_move;list");
         values.put(new CellRef("A1"), "test basic move");
         values.put(new CellRef("A2"), "TRUE");
         values.put(new CellRef("B2"), "move text");

@@ -3,7 +3,7 @@ package com.whiskytangofox.ptbadiscordbot.wrappers;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 public class HashMapIgnoreCaseTest {
 
@@ -17,7 +17,7 @@ public class HashMapIgnoreCaseTest {
     @Test
     public void get() {
         map.put("Test Key", "test value");
-        assertTrue(map.keySet().contains("testkey"));
+        assertTrue(map.containsKey("testkey"));
         assertTrue(map.get("Test Key") == "test value");
         assertTrue(map.get("TestKey") == "test value");
         assertTrue(map.get("Testkey") == "test value");
@@ -26,7 +26,7 @@ public class HashMapIgnoreCaseTest {
     @Test
     public void put() {
         map.put("Test Key", "test value");
-        assertTrue(map.keySet().contains("testkey"));
+        assertTrue(map.containsKey("testkey"));
     }
 
     @Test

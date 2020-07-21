@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Properties;
@@ -74,7 +74,7 @@ public class App extends ListenerAdapter {
             channel.sendMessage("Sheet Link Detected, attempting to register game").queue();
             String sheetID = getSheetID(msg);
             Game game = new Game(guild, channel, sheetID, msg.contains("debug"));
-            channel.sendMessage("Game registered").queue();
+            channel.sendMessage("Game registered.").queue();
             registeredGames.put(channel, game);
             return true;
         } catch (Throwable e) {
