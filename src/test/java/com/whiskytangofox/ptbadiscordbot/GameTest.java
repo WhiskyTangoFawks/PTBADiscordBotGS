@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -322,8 +321,8 @@ public class GameTest {
     public void testModifyResource_Checklist_PosChange() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
-        ArrayList<CellRef> listCellRefs = Arrays.asList(cellRefs).stream()
-                .map(CellRef::new).collect(Collectors.toCollection((Supplier<ArrayList>) ArrayList::new));
+        ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
+                .map(c -> new CellRef(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
@@ -345,9 +344,8 @@ public class GameTest {
     public void testModifyResource_Checklist_NegChange() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
-        ArrayList<CellRef> listCellRefs = Arrays.stream(cellRefs)
-                .map(CellRef::new)
-                .collect(Collectors.toCollection((Supplier<ArrayList>) ArrayList::new));
+        ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
+                .map(c -> new CellRef(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
@@ -392,9 +390,8 @@ public class GameTest {
     public void testModifyResource_Checklist_PosChangeLimited() throws IOException, PlayerNotFoundException {
         Playbook book = new Playbook("test");
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
-        ArrayList<CellRef> listCellRefs = Arrays.stream(cellRefs)
-                .map(CellRef::new)
-                .collect(Collectors.toCollection((Supplier<ArrayList>) ArrayList::new));
+        ArrayList<CellRef> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
+                .map(c -> new CellRef(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new ResourceWrapper(listCellRefs));
         game.playbooks.put("test1", book);
