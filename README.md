@@ -51,7 +51,7 @@ Example: _!hp +2_
 # GoogleSheet Setup Info
 To enable a google sheet keeper to be used with this bot, you have to add the required notes to the sheet (right click a cell, insert note). These notes are what the bot uses to determine what to load, and how to load it
 
-##The sheetreader
+##How the Bot Reads the Sheet
 The bot will read the entire sheet, and uses notes to decide what and how to load into the bot. Sheets should not contain any other notes.
 
 ##Notes and their Functions
@@ -72,7 +72,18 @@ If a cell is a boolean value (TRUE or FALSE, e.g. a checkbox), if TRUE, then the
 
 If move text has a single Roll +Stat listed, then when a player with that stat rolls the move, the bot will also use that stat, and apply the associated debility penalty if applicable
 
-###Optional Move tags
+##Secondary Moves
+Playbook moves with modify basic moves can load the modified basic move into the playbook. To do so, simply add the basic move in parenthesis to the name of the secondary move
+
+Example: Hard to Kill (Last Breath)
+
+This will also accept a comma separated list.
+
+Example: Stealthy (Defy Danger, Scout Ahead, Struggle as One)
+
+In both cases, a modified version of the basic move will be loaded into the set of stored playbook moves for that player.
+
+###Optional Move note tags
 The following additional tag may be provided on move notes to change how the moves are loaded. Tags need to be separated with a colon :
 
 | tag       | description                                                                                                             |
