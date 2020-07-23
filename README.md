@@ -18,6 +18,8 @@ After adding the bot to your channel, share the Google Sheet with the bot either
 
 After share permissions are setup, copy and paste the URL of your google sheet into the chat.
 
+Resources and Stats are always retreived from the sheet. All other information (moves, discord name assignments, etc) is stored in the bot, any changes to the values in the sheet will not be reflected until the game is re-registered.
+
 ###Debug Mode
 add debug to the end of the URL to launch the sheet reader in debug mode. This makes the loader much slower, but prints to the chat everything that gets loaded. This is primarily for users trying to modify a the notes that determine how the bot loads the google sheet, to verify that everything is loading correctly
 
