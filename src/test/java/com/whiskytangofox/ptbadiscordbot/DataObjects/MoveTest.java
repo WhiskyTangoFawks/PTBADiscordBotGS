@@ -1,4 +1,4 @@
-package com.whiskytangofox.ptbadiscordbot.wrappers;
+package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -8,42 +8,42 @@ import java.util.HashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class MoveWrapperTest {
+public class MoveTest {
 
     static HashSet<String> stats = new HashSet<String>();
 
     @BeforeClass
-    public static void beforeClass(){
+    public static void beforeClass() {
         stats.add("str");
     }
 
     @Test
     public void getMoveStat() {
-        MoveWrapper wrapper = new MoveWrapper("test", "test text roll +str");
+        Move wrapper = new Move("test", "test text roll +str");
         assertEquals("str", wrapper.getMoveStat(stats));
     }
 
     @Test
     public void getMoveStatSpace() {
-        MoveWrapper wrapper = new MoveWrapper("test", "test text roll + str");
+        Move wrapper = new Move("test", "test text roll + str");
         assertEquals("str", wrapper.getMoveStat(stats));
     }
 
     @Test
     public void getMoveStatCaps() {
-        MoveWrapper wrapper = new MoveWrapper("test", "test text roll +STR");
+        Move wrapper = new Move("test", "test text roll +STR");
         assertEquals("str", wrapper.getMoveStat(stats));
     }
 
     @Test
     public void getMoveStatNoStat() {
-        MoveWrapper wrapper = new MoveWrapper("test", "test text roll +BLARG");
+        Move wrapper = new Move("test", "test text roll +BLARG");
         assertNull(wrapper.getMoveStat(stats));
     }
 
     @Test
     public void getMoveStatNoRoll() {
-        MoveWrapper wrapper = new MoveWrapper("test", "test text +str");
+        Move wrapper = new Move("test", "test text +str");
         assertNull(wrapper.getMoveStat(stats));
     }
 

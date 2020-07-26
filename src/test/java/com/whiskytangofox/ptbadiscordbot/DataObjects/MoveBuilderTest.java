@@ -1,21 +1,14 @@
-package com.whiskytangofox.ptbadiscordbot.wrappers;
+package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
-import com.whiskytangofox.ptbadiscordbot.Game;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.util.Arrays;
-
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 public class MoveBuilderTest {
 
@@ -28,10 +21,6 @@ public class MoveBuilderTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    @Mock
-    static Game mockGame;
-
-
     @BeforeClass
     public static void buildHackAndSlash(){
         builder = new MoveBuilder();
@@ -42,9 +31,8 @@ public class MoveBuilderTest {
     }
 
     @Before
-    public void setupMocks() throws PlayerNotFoundException {
+    public void setupMocks() {
         MockitoAnnotations.initMocks(this);
-        when(mockGame.getRegisteredStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
     }
 
     @Test
@@ -53,7 +41,7 @@ public class MoveBuilderTest {
 
     @Test
     public void testBuild(){
-        MoveWrapper move = builder.getMove();
+        Move move = builder.getMove();
         assertEquals(hack[0], move.name);
         assertEquals("**"+hack[0]+"**"+System.lineSeparator()+hack[1], move.text);
     }

@@ -1,4 +1,4 @@
-package com.whiskytangofox.ptbadiscordbot.googlesheet;
+package com.whiskytangofox.ptbadiscordbot.GoogleSheet;
 
 import com.whiskytangofox.ptbadiscordbot.App;
 

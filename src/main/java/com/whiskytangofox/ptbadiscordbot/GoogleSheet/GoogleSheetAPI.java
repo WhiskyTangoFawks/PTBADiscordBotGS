@@ -1,4 +1,4 @@
-package com.whiskytangofox.ptbadiscordbot.googlesheet;
+package com.whiskytangofox.ptbadiscordbot.GoogleSheet;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -75,7 +75,7 @@ public class GoogleSheetAPI {
                 for (GridData data : sheet.getData()) {
                     int columns = sheet.getProperties().getGridProperties().getColumnCount();
                     int rows = sheet.getProperties().getGridProperties().getRowCount();
-                    CellRef ref = new CellRef(columns, rows);
+                    CellReference ref = new CellReference(columns, rows);
                     list.add(new RangeWrapper(data, sheet.getProperties().getTitle(), "A1:"+ref.getCellRef()));
                 }
             }

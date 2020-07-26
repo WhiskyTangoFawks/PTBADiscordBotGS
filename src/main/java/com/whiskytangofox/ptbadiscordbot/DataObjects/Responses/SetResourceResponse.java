@@ -1,12 +1,12 @@
-package com.whiskytangofox.ptbadiscordbot.wrappers;
+package com.whiskytangofox.ptbadiscordbot.DataObjects.Responses;
 
-public class SetResourceResult {
+public class SetResourceResponse {
     public final String resource;
     public final int oldValue;
     public final int newValue;
     public final int mod;
 
-    public SetResourceResult(String resource, int oldValue, int mod, int newValue){
+    public SetResourceResponse(String resource, int oldValue, int mod, int newValue) {
         this.resource = resource;
         this.oldValue = oldValue;
         this.newValue = newValue;

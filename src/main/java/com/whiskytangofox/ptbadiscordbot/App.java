@@ -1,9 +1,8 @@
 package com.whiskytangofox.ptbadiscordbot;
 
-import com.whiskytangofox.ptbadiscordbot.googlesheet.GoogleSheetAPI;
+import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -15,18 +14,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
-import java.util.Properties;
 
 
 public class App extends ListenerAdapter {
 
     public static final Logger logger = LoggerFactory.getLogger(App.class);
-    public final static Properties config = new Properties();
-
     public static GoogleSheetAPI googleSheetAPI;
-
     static JDA jda;
-
     static HashMap<MessageChannel, Game> registeredGames = new HashMap<MessageChannel, Game>();
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {
@@ -39,7 +33,8 @@ public class App extends ListenerAdapter {
             jda = new JDABuilder(token)
                     .addEventListeners(new App())
                     .build();
-            jda.getPresence().setActivity(Activity.of(Activity.ActivityType.CUSTOM_STATUS, "type !info for help"));
+            //TODO - fix custom status
+            //jda.getPresence().setActivity(Activity.of(Activity.ActivityType.CUSTOM_STATUS, "type !info for help"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -59,12 +54,10 @@ public class App extends ListenerAdapter {
             registerGame(event.getGuild(), event.getChannel(), msg);
         }
 
-        if(msg.contains("/shutdown")){
-            System.exit(0);
-        }
-
         if (registeredGames.containsKey(event.getChannel())) {
             registeredGames.get(event.getChannel()).OnMessageReceived(event);
+        } else if (msg.startsWith("!")) {
+            event.getChannel().sendMessage("No game registered for this channel, pleace post your google sheet URL in the chat if you want to use this bot");
         }
 
     }
@@ -95,7 +88,6 @@ public class App extends ListenerAdapter {
             int start = msg.indexOf("/d/")+3;
             int end = msg.lastIndexOf("/");
             String sheetID = msg.substring(start, end);
-
             return sheetID;
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to extract sheet ID");

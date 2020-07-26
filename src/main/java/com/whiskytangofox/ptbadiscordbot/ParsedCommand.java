@@ -1,12 +1,11 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.GetStatResponse;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
-import com.whiskytangofox.ptbadiscordbot.wrappers.DieWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
-import com.whiskytangofox.ptbadiscordbot.wrappers.StatWrapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,17 +16,17 @@ public class ParsedCommand {
 
     private final String author;
     private final Game game;
-    MoveWrapper move = null;
+    Move move = null;
     int mod = 0;
-    ArrayList<DieWrapper> dice = new ArrayList<DieWrapper>();
+    ArrayList<Dice> dice = new ArrayList<>();
     String resultText;
     String stat = null;
-    StatWrapper statwrapper;
+    GetStatResponse statwrapper;
     boolean doRoll = false;
     String resource = null;
     boolean failMsg = false;
 
-
+    //TODO - separate out the parsedCommand object and the Parser service
 
     public ParsedCommand(Game game, String author, String command) throws KeyConflictException, IOException, DiscordBotException {
         this.author = author;
@@ -55,17 +54,18 @@ public class ParsedCommand {
             }
             if (i == 0) {
                 if ("info".equalsIgnoreCase(parameters.get(i))) {
-                    move = new MoveWrapper("Help Info", getInfoMessage());
+                    move = new Move("Help Info", getInfoMessage());
                 } else if ("roll".equalsIgnoreCase(parameters.get(i))) {
                     doRoll = true;
                 } else if (game.isMove(author, parameters.get(i))) {
                     //skips the rest of the move name when it is written with spaces
                     i = i + getMoveArrayPositions(author, i, parameters);
                     move = game.getMove(author, parameters.get(i));
+                    mod = mod + game.playbooks.getMovePenalty(author, move.getReferenceMoveName());
                 } else if (isDieNotation(parameters.get(i))) {
                     parseDieNotation(parameters.get(i));
                     doRoll = true;
-                } else if (game.isResource(author, parameters.get(i))) {
+                } else if (game.playbooks.isResource(author, parameters.get(i))) {
                     resource = parameters.get(i);
                 } else {
                     throw new IllegalArgumentException("Unrecognised command " + parameters.get(i));
@@ -74,24 +74,25 @@ public class ParsedCommand {
                 parseAdvDis(parameters.get(i));
             } else if (isDieNotation(parameters.get(i))) {
                 parseDieNotation(parameters.get(i));
-            } else if (game.isStat(author, parameters.get(i))) {
+            } else if (game.playbooks.isStat(author, parameters.get(i))) {
                 stat = parameters.get(i);
-                statwrapper = game.getStat(author, stat);
+                statwrapper = game.playbooks.getStat(author, stat);
                 if (statwrapper.isDebilitated) {
                     parameters.add(statwrapper.debilityTag);
                 }
             } else if (isInteger(parameters.get(i))) {
-                mod = Integer.parseInt(parameters.get(i));
+                mod = mod + Integer.parseInt(parameters.get(i));
             } else if (move == null && game.isMove(author, parameters.get(i))) {
                 i = i + getMoveArrayPositions(author, i, parameters);
                 move = game.getMove(author, parameters.get(i));
                 if (stat == null) {
-                    stat = move.getMoveStat(game.getRegisteredStatsForPlayer(author));
-                    statwrapper = game.getStat(author, stat);
+                    stat = move.getMoveStat(game.playbooks.getRegisteredStatsForPlayer(author));
+                    statwrapper = game.playbooks.getStat(author, stat);
                     if (statwrapper.isDebilitated) {
                         parameters.add(statwrapper.debilityTag);
                     }
                 }
+                mod = mod + game.playbooks.getMovePenalty(author, move.getReferenceMoveName());
             } else if (!parameters.get(i).isBlank()) {
                 throw new IllegalArgumentException("Unrecognised argument " + parameters.get(i));
             }
@@ -99,12 +100,12 @@ public class ParsedCommand {
     }
 
 
-    public String getRollResults(Boolean failMsg) throws IOException {
+    public String getRollResults(Boolean failMsg) {
         if ((dice.size() == 0)) {
             setDefaultDice();
         }
         int statMod = statwrapper == null ? 0 : statwrapper.modStat;
-        return Dice.roll(dice, mod, stat, statMod, failMsg);
+        return com.whiskytangofox.ptbadiscordbot.Services.Dice.roll(dice, mod, stat, statMod, failMsg);
     }
 
 
@@ -113,9 +114,8 @@ public class ParsedCommand {
     }
 
     public void setDefaultDice() {
-        Playbook book = game.playbooks.get(author);
-        if (move != null && book != null && book.moveOverrideDice.containsKey(move.name)) {
-            parseDieNotation(book.moveOverrideDice.get(move.name));
+        if (move != null && game.playbooks.getMoveDice(author, move.name) != null) {
+            parseDieNotation(game.playbooks.getMoveDice(author, move.name));
         } else {
             if (game.settings.getProperty("default_system_dice") == null) {
                 game.sendGameMessage("system_default_dice has not been set in the properties tab");
@@ -133,7 +133,7 @@ public class ParsedCommand {
         if (rollParameters.length == 2) {
             num = Integer.parseInt(rollParameters[0]);
             size = Integer.parseInt(rollParameters[1]);
-            dice.add(new DieWrapper(num, size));
+            dice.add(new Dice(num, size));
         }
     }
 
@@ -182,7 +182,7 @@ public class ParsedCommand {
 
     public String handleResourceRequest() throws IOException, PlayerNotFoundException {
         int statMod = statwrapper == null ? 0 : statwrapper.modStat;
-        return game.modifyResource(author, resource, mod + statMod).getDescriptiveResult();
+        return game.playbooks.modifyResource(author, resource, mod + statMod).getDescriptiveResult();
     }
 
 }

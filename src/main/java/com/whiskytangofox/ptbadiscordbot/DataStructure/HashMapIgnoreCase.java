@@ -1,4 +1,4 @@
-package com.whiskytangofox.ptbadiscordbot.wrappers;
+package com.whiskytangofox.ptbadiscordbot.DataStructure;
 
 import java.util.HashMap;
 

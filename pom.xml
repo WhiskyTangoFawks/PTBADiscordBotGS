@@ -61,6 +61,13 @@
             <artifactId>google-api-services-sheets</artifactId>
             <version>v4-rev581-1.25.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.inject/javax.inject -->
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
+        </dependency>
+
     </dependencies>
 
     <repositories>

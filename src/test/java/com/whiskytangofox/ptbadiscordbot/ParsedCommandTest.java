@@ -1,9 +1,15 @@
 package com.whiskytangofox.ptbadiscordbot;
 
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.MoveBuilder;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.GetStatResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
-import com.whiskytangofox.ptbadiscordbot.wrappers.*;
+import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
+import com.whiskytangofox.ptbadiscordbot.Services.GameSheetService;
+import com.whiskytangofox.ptbadiscordbot.Services.PlaybookService;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import org.junit.Before;
@@ -23,14 +29,14 @@ import java.util.Properties;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ParsedCommandTest {
 
     public static final Logger logger = LoggerFactory.getLogger(ParsedCommandTest.class);
 
     static ParsedCommand tester;
-    static MoveWrapper move;
+    static Move move;
     static MoveBuilder builder;
 
     static final String testPlayer = "test1";
@@ -43,6 +49,14 @@ public class ParsedCommandTest {
 
     @Mock
     static MessageAction mockMessageAction;
+
+    @Mock
+    static GoogleSheetAPI mockApi;
+
+    @Mock
+    PlaybookService mockPlaybookService;
+
+    GameSheetService mockSheetService;
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -67,13 +81,14 @@ public class ParsedCommandTest {
         when(mockChannel.sendMessage(anyString())).thenReturn(mockMessageAction);
 
         String[] stats = {"str", "dex", "con", "int", "wis", "cha"};
-        mockGame.playbooks = new HashMapIgnoreCase();
-        when(mockGame.getRegisteredStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
-        when(mockGame.isStat("test", "STR")).thenReturn(true);
-        when(mockGame.isStat(anyString(), anyString())).thenReturn(false);
-        StatWrapper stat = new StatWrapper("str", 1, false, "dis");
-        when(mockGame.getStat(anyString(), anyString())).thenReturn(stat);
-        MoveWrapper move = builder.getMove();
+        mockGame.playbooks = mockPlaybookService;
+        when(mockGame.playbooks.getRegisteredStatsForPlayer(anyString())).thenReturn(Arrays.asList(stats));
+        when(mockGame.playbooks.isStat("test", "STR")).thenReturn(true);
+        when(mockGame.playbooks.isStat(anyString(), anyString())).thenReturn(false);
+        GetStatResponse stat = new GetStatResponse("str", 1, false);
+        stat.debilityTag = "dis";
+        when(mockGame.playbooks.getStat(anyString(), anyString())).thenReturn(stat);
+        Move move = builder.getMove();
         when(mockGame.getMove(anyString(), anyString())).thenReturn(move);
 
         when(mockGame.isMove(anyString(), anyString())).thenAnswer(invocation ->
@@ -82,7 +97,7 @@ public class ParsedCommandTest {
         mockGame.settings = new Properties();
         mockGame.settings.put("default_system_dice", "2d6");
         mockGame.settings.put("stat_debility_tag", "dis");
-
+        mockSheetService = new GameSheetService(null, mockApi, mockGame.settings);
         tester = new ParsedCommand(mockGame, testPlayer, null);
     }
 
@@ -170,29 +185,47 @@ public class ParsedCommandTest {
     @Test
     public void splitAndParseCommand1() throws Exception {
         tester.splitAndParseCommand("roll");
-        assertEquals(true, tester.doRoll);
+        assertTrue(tester.doRoll);
     }
 
     @Test
     public void splitAndParseCommand2() throws Exception {
         tester.splitAndParseCommand("roll adv");
-        assertEquals(true, tester.doRoll);
-        assertEquals(true, tester.dice.get(0).adv);
-        assertEquals(false, tester.dice.get(0).dis);
+        assertTrue(tester.doRoll);
+        assertTrue(tester.dice.get(0).adv);
+        assertFalse(tester.dice.get(0).dis);
     }
 
     @Test
     public void splitAndParseCommand3() throws Exception {
         tester.splitAndParseCommand("roll dis");
-        assertEquals(true, tester.doRoll);
-        assertEquals(false, tester.dice.get(0).adv);
-        assertEquals(true, tester.dice.get(0).dis);
+        assertTrue(tester.doRoll);
+        assertFalse(tester.dice.get(0).adv);
+        assertTrue(tester.dice.get(0).dis);
     }
 
     @Test
     public void splitAndParseCommand4() throws Exception {
         tester.splitAndParseCommand("hack");
         assertEquals(builder.get(0), tester.move.name);
+    }
+
+    @Test
+    public void splitAndParseCommandMoveWithPenalty() throws Exception {
+        when(mockPlaybookService.getMovePenalty(testPlayer, "hackandslash")).thenReturn(-10);
+        tester = new ParsedCommand(mockGame, testPlayer, null);
+
+        Move move = mockGame.getMove(testPlayer, "Hack and Slash");
+        assertEquals("Hack and Slash", move.name);
+
+        tester.splitAndParseCommand("roll hack +0");
+        assertEquals("Hack and Slash", tester.move.name);
+
+        String results = tester.getRollResults(true);
+        logger.info(results);
+        verify(mockPlaybookService, times(1)).getMovePenalty(testPlayer, "hackandslash");
+        assertEquals(-10, tester.mod);
+        assertTrue(results.contains("-10"));
     }
 
     @Test
@@ -227,7 +260,7 @@ public class ParsedCommandTest {
     public void splitAndParseCommand5() throws Exception {
         tester = new ParsedCommand(mockGame, testPlayer, null);
 
-        MoveWrapper move = mockGame.getMove(testPlayer, "Hack and Slash");
+        Move move = mockGame.getMove(testPlayer, "Hack and Slash");
         assertEquals("Hack and Slash", move.name);
 
         tester.splitAndParseCommand("roll hack +10");
@@ -244,26 +277,21 @@ public class ParsedCommandTest {
     }
 
     @Test
-    public void testSetDefaultDice() throws IOException, DiscordBotException, KeyConflictException {
-        tester.move = new MoveWrapper("Deal Damage", "Test deal damage text");
-        Playbook book = new Playbook(null);
-        book.player =
-        book.moveOverrideDice.put("Deal Damage", "1d8");
-        mockGame.playbooks.put(testPlayer, book);
+    public void testSetDefaultDice() {
+        tester.move = new Move("Deal Damage", "Test deal damage text");
+        when(mockGame.playbooks.getMoveDice(anyString(), anyString())).thenReturn("1d8");
         tester.setDefaultDice();
         assertEquals(1, tester.dice.get(0).num);
         assertEquals(8, tester.dice.get(0).size);
     }
 
     @Test
-    public void testResultWithDealDamageOverrideDice() throws IOException, DiscordBotException {
-        tester.move = new MoveWrapper("Deal Damage", "Test deal damage text");
-        Playbook book = new Playbook(null);
-        book.moveOverrideDice.put("Deal Damage", "1d8");
-        mockGame.playbooks.put(testPlayer, book);
+    public void testResultWithDealDamageOverrideDice() throws IOException {
+        tester.move = new Move("Deal Damage", "Test deal damage text");
+        when(mockGame.playbooks.getMoveDice(anyString(), anyString())).thenReturn("1d8");
         String result = tester.getRollResults(false);
         logger.info(result);
-        assertTrue(result.contains( "1d8"));
+        assertTrue(result.contains("1d8"));
     }
 
     @Test
@@ -273,8 +301,8 @@ public class ParsedCommandTest {
 
     @Test
     public void testHandleResourceRequest() throws IOException, PlayerNotFoundException {
-        when(mockGame.modifyResource(testPlayer, "hp", 1))
-                .thenReturn(new SetResourceResult("hp", 10, 1, 11));
+        when(mockGame.playbooks.modifyResource(testPlayer, "hp", 1))
+                .thenReturn(new SetResourceResponse("hp", 10, 1, 11));
         tester.mod = 1;
         tester.resource = "hp";
 
@@ -284,8 +312,8 @@ public class ParsedCommandTest {
 
     @Test
     public void testHandleResourceRequestSubtract() throws IOException, PlayerNotFoundException {
-        when(mockGame.modifyResource(testPlayer, "hp", -1))
-                .thenReturn(new SetResourceResult("hp", 10, -1, 9));
+        when(mockGame.playbooks.modifyResource(testPlayer, "hp", -1))
+                .thenReturn(new SetResourceResponse("hp", 10, -1, 9));
         tester.mod = -1;
         tester.resource = "hp";
         String result = tester.handleResourceRequest();
@@ -295,9 +323,9 @@ public class ParsedCommandTest {
 
     @Test
     public void testParseResourceRequest() throws IOException, DiscordBotException, KeyConflictException {
-        when(mockGame.isResource(testPlayer, "hp")).thenReturn(true);
-        when(mockGame.modifyResource(testPlayer, "hp", 1))
-                .thenReturn(new SetResourceResult("hp", 10, 1, 11));
+        when(mockGame.playbooks.isResource(testPlayer, "hp")).thenReturn(true);
+        when(mockGame.playbooks.modifyResource(testPlayer, "hp", 1))
+                .thenReturn(new SetResourceResponse("hp", 10, 1, 11));
         tester.splitAndParseCommand("hp +1");
         assertEquals(tester.resource, "hp");
         assertEquals(tester.mod, 1);
@@ -305,9 +333,10 @@ public class ParsedCommandTest {
 
     @Test
     public void testParseStatDebilityTag() throws IOException, DiscordBotException, KeyConflictException {
-        StatWrapper stat = new StatWrapper("str", 2, true, "dis");
-        when(mockGame.getStat(testPlayer, "str")).thenReturn(stat);
-        when(mockGame.isStat(testPlayer, "str")).thenReturn(true);
+        GetStatResponse stat = new GetStatResponse("str", 2, true);
+        stat.debilityTag = "dis";
+        when(mockGame.playbooks.getStat(testPlayer, "str")).thenReturn(stat);
+        when(mockGame.playbooks.isStat(testPlayer, "str")).thenReturn(true);
         tester.splitAndParseCommand("roll str");
         assertTrue(tester.dice.get(0).dis);
     }

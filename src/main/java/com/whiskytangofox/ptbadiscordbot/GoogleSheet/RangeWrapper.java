@@ -1,4 +1,4 @@
-package com.whiskytangofox.ptbadiscordbot.googlesheet;
+package com.whiskytangofox.ptbadiscordbot.GoogleSheet;
 
 import com.google.api.services.sheets.v4.model.CellData;
 import com.google.api.services.sheets.v4.model.GridData;
@@ -9,30 +9,30 @@ import java.util.HashMap;
 
 public class RangeWrapper {
 
-    private final HashMap<CellRef, String> values;
-    private final HashMap<CellRef, String> notes;
-    public final CellRef firstCell;
-    public final CellRef lastCell;
+    private final HashMap<CellReference, String> values;
+    private final HashMap<CellReference, String> notes;
+    public final CellReference firstCell;
+    public final CellReference lastCell;
     public final String tab;
 
-   public RangeWrapper(GridData data, String tab, String rangeDef){
-       this.tab = tab;
-       firstCell = new CellRef(rangeDef.split(":")[0]);
-        lastCell = new CellRef (rangeDef.split(":")[1]);
-        this.values = new HashMap<CellRef, String>();
-        this.notes = new HashMap<CellRef, String>();
-        for (int i = 0; i < lastCell.getColumnInt()-firstCell.getColumnInt()+1; i++){
-            for (int j = 0; j < lastCell.getRow()-firstCell.getRow()+1; j++){
-                int c = i+firstCell.getColumnInt();
-                int r = j+firstCell.getRow();
+    public RangeWrapper(GridData data, String tab, String rangeDef) {
+        this.tab = tab;
+        firstCell = new CellReference(rangeDef.split(":")[0]);
+        lastCell = new CellReference(rangeDef.split(":")[1]);
+        this.values = new HashMap<CellReference, String>();
+        this.notes = new HashMap<CellReference, String>();
+        for (int i = 0; i < lastCell.getColumnInt() - firstCell.getColumnInt() + 1; i++) {
+            for (int j = 0; j < lastCell.getRow() - firstCell.getRow() + 1; j++) {
+                int c = i + firstCell.getColumnInt();
+                int r = j + firstCell.getRow();
                 try {
                     CellData cell = data.getRowData().get(j).getValues().get(i);
-                    CellRef cellref = new CellRef(c,r);
+                    CellReference cellref = new CellReference(c, r);
                     this.values.put(cellref, cell.getFormattedValue());
                     this.notes.put(cellref, cell.getNote());
-                } catch (IndexOutOfBoundsException e){
+                } catch (IndexOutOfBoundsException e) {
                     //value = null;
-                } catch (NullPointerException e){
+                } catch (NullPointerException e) {
                     //value = null;
                 }
 
@@ -41,9 +41,9 @@ public class RangeWrapper {
         }
     }
 
-    public RangeWrapper(HashMap<CellRef, String> dataValues,HashMap<CellRef, String> dataNotes, String tab, String rangeDef) {
-        firstCell = new CellRef(rangeDef.split(":")[0]);
-        lastCell = new CellRef (rangeDef.split(":")[1]);
+    public RangeWrapper(HashMap<CellReference, String> dataValues, HashMap<CellReference, String> dataNotes, String tab, String rangeDef) {
+        firstCell = new CellReference(rangeDef.split(":")[0]);
+        lastCell = new CellReference(rangeDef.split(":")[1]);
         this.tab = tab;
         this.notes = dataNotes;
         this.values = dataValues;
@@ -55,11 +55,11 @@ public class RangeWrapper {
      * @param subrangeAnchor the base range, to be offset
      * @param offset the number of cells to shift subRangeAnchor to the right
      */
-    public RangeWrapper(RangeWrapper parent, String subrangeAnchor, int offset){
-        CellRef subrangeFirst = new CellRef(subrangeAnchor.split(":")[0]);
-        CellRef subrangeLast = new CellRef (subrangeAnchor.split(":")[1]);
-        firstCell = new CellRef(subrangeFirst.getColumnInt()+offset, subrangeFirst.getRow());
-        lastCell = new CellRef(subrangeLast.getColumnInt()+offset, subrangeLast.getRow());
+    public RangeWrapper(RangeWrapper parent, String subrangeAnchor, int offset) {
+        CellReference subrangeFirst = new CellReference(subrangeAnchor.split(":")[0]);
+        CellReference subrangeLast = new CellReference(subrangeAnchor.split(":")[1]);
+        firstCell = new CellReference(subrangeFirst.getColumnInt() + offset, subrangeFirst.getRow());
+        lastCell = new CellReference(subrangeLast.getColumnInt() + offset, subrangeLast.getRow());
         this.tab = parent.tab;
         this.notes = parent.notes;
         this.values = parent.values;
@@ -71,7 +71,7 @@ public class RangeWrapper {
                     sheetRow < firstCell.getRow() || sheetRow > lastCell.getRow()){
                 //App.logger.warn("Tried to access value outside range");
             }
-            return values.get(new CellRef(sheetColumn, sheetRow));
+            return values.get(new CellReference(sheetColumn, sheetRow));
         } catch (IndexOutOfBoundsException e){
             return null;
         } catch (NullPointerException e){
@@ -85,7 +85,7 @@ public class RangeWrapper {
                     sheetRow < firstCell.getRow() || sheetRow > lastCell.getRow()){
                 App.logger.warn("Tried to access value outside range");
             }
-            return notes.get(new CellRef(sheetColumn, sheetRow));
+            return notes.get(new CellReference(sheetColumn, sheetRow));
         } catch (IndexOutOfBoundsException e){
             return null;
         } catch (NullPointerException e){
@@ -94,12 +94,12 @@ public class RangeWrapper {
     }
 
     public String getValue(String cellRef){
-        CellRef cell = new CellRef(cellRef);
+        CellReference cell = new CellReference(cellRef);
         return getValue(cell.getColumnInt(), cell.getRow());
     }
 
     public String getNote(String cellRef){
-        CellRef cell = new CellRef(cellRef);
+        CellReference cell = new CellReference(cellRef);
         return getNote(cell.getColumnInt(), cell.getRow());
     }
 

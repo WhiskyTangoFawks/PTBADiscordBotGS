@@ -1,4 +1,4 @@
-package com.whiskytangofox.ptbadiscordbot.googlesheet;
+package com.whiskytangofox.ptbadiscordbot.GoogleSheet;
 
 import org.junit.BeforeClass;
 import org.slf4j.Logger;

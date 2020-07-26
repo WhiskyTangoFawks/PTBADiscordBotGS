@@ -103,6 +103,10 @@ Resources can be loaded from a sheet either as a list of booleans (check boxes),
 
 Example: _resource=hp;min=0;max=20_
 
+Resources can also be designated as move penalties, which are applied automatically whenever the listed move is rolled
+
+Example _resource=spell;min=-10;max=0;move_penalty=Cast A Spell_
+
 ##Properties Tab
 1) Add a properties tab, with the required properties.
 

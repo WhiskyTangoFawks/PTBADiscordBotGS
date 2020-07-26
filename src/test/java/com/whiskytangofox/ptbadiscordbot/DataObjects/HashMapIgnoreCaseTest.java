@@ -1,5 +1,6 @@
-package com.whiskytangofox.ptbadiscordbot.wrappers;
+package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
+import com.whiskytangofox.ptbadiscordbot.DataStructure.HashMapIgnoreCase;
 import org.junit.Before;
 import org.junit.Test;
 

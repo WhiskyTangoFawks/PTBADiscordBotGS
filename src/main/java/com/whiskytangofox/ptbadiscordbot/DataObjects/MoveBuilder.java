@@ -1,11 +1,11 @@
-package com.whiskytangofox.ptbadiscordbot.wrappers;
+package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
 import java.util.ArrayList;
 
 
 public class MoveBuilder {
 
-    private ArrayList<String> builder = new ArrayList<String>();
+    private final ArrayList<String> builder = new ArrayList<String>();
 
     public MoveBuilder addLine(){
         builder.add("");
@@ -35,21 +35,21 @@ public class MoveBuilder {
                     !builder.get(1).isBlank();
     }
 
-    public MoveWrapper getMove(){
+    public Move getMove() {
         StringBuffer moveText = new StringBuffer();
-        for (int i = 0; i < builder.size(); i++){
-            if (i > 0){
+        for (int i = 0; i < builder.size(); i++) {
+            if (i > 0) {
                 moveText.append(System.lineSeparator());
             }
-            if (i == 0){
-                moveText.append("**" + builder.get(i)+ "**");
+            if (i == 0) {
+                moveText.append("**" + builder.get(i) + "**");
             } else {
                 moveText.append(builder.get(i));
             }
 
         }
 
-        MoveWrapper move = new MoveWrapper(builder.get(0), moveText.toString());
+        Move move = new Move(builder.get(0), moveText.toString());
         return move;
     }
 

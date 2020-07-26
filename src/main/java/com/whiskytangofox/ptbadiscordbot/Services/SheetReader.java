@@ -1,11 +1,13 @@
-package com.whiskytangofox.ptbadiscordbot;
+package com.whiskytangofox.ptbadiscordbot.Services;
 
-import com.whiskytangofox.ptbadiscordbot.googlesheet.CellRef;
-import com.whiskytangofox.ptbadiscordbot.googlesheet.RangeWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveBuilder;
-import com.whiskytangofox.ptbadiscordbot.wrappers.MoveWrapper;
-import com.whiskytangofox.ptbadiscordbot.wrappers.Playbook;
-import com.whiskytangofox.ptbadiscordbot.wrappers.ResourceWrapper;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.MoveBuilder;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Resource;
+import com.whiskytangofox.ptbadiscordbot.Game;
+import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
+import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
+import com.whiskytangofox.ptbadiscordbot.ParsedCommand;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,7 @@ public class SheetReader {
     public static String registered_msg = "Registered playbook for ";
     public static String start_load_msg = "Starting load for playbook ";
 
-    enum Metadata {new_playbook, discord_name, basic_move, playbook_move, stat, stat_penalty, resource, default_dice}
+    public enum Metadata {new_playbook, discord_name, basic_move, playbook_move, stat, stat_penalty, resource, default_dice}
 
     public void parseSheet(RangeWrapper sheet) {
         Playbook playbook = null;
@@ -37,7 +39,7 @@ public class SheetReader {
                         if (sheet.getNote(i, j) != null && !sheet.getNote(i, j).isBlank()) {
                             String note = sheet.getNote(i, j).toLowerCase().replace(" ", "");
                             MoveBuilder builder;
-                            MoveWrapper move;
+                            Move move;
                             String statName;
 
                             switch (Metadata.valueOf(note.split(";")[0].split("=")[0])) {
@@ -59,13 +61,13 @@ public class SheetReader {
                                     break;
                                 case stat:
                                     statName = note.replace(Metadata.stat.name() + "=", "").toLowerCase();
-                                    playbook.stats.put(statName, new CellRef(i, j));
+                                    playbook.stats.put(statName, new CellReference(i, j));
                                     game.sendDebugMsg("Loaded stat: " + statName);
                                 case stat_penalty:
                                     String stats = note.replace(Metadata.stat_penalty.name() + "=", "");
                                     String[] statNames = stats.split(",");
                                     for (String stat : statNames) {
-                                        playbook.stat_penalties.put(stat, new CellRef(i, j));
+                                        playbook.stat_penalties.put(stat, new CellReference(i, j));
                                         game.sendDebugMsg("Loaded stat penalty: " + stat);
                                     }
                                     break;
@@ -73,22 +75,26 @@ public class SheetReader {
                                     String resourceName = null;
                                     Integer min = null;
                                     Integer max = null;
+                                    String movePenalty = null;
                                     for (String parameter : note.split(";")) {
-                                        if (parameter.split("=")[0].equalsIgnoreCase(Metadata.resource.name())) {
-                                            resourceName = parameter.split("=")[1];
-                                        } else if (parameter.split("=")[0].equalsIgnoreCase("min")) {
-                                            min = Integer.parseInt(parameter.split("=")[1]);
-                                        } else if (parameter.split("=")[0].equalsIgnoreCase("max")) {
-                                            max = Integer.parseInt(parameter.split("=")[1]);
+                                        String tag = parameter.split("=")[0];
+                                        String value = parameter.split("=")[1];
+                                        if (tag.equalsIgnoreCase(Metadata.resource.name())) {
+                                            resourceName = value;
+                                        } else if (tag.equalsIgnoreCase("min")) {
+                                            min = Integer.parseInt(value);
+                                        } else if (tag.equalsIgnoreCase("max")) {
+                                            max = Integer.parseInt(value);
+                                        } else if (tag.equalsIgnoreCase("move_penalty")) {
+                                            movePenalty = value;
                                         }
                                     }
                                     int size = 0;
                                     if (playbook.resources.containsKey(resourceName)) {
-                                        playbook.resources.get(resourceName).add(new CellRef(i, j));
+                                        playbook.resources.get(resourceName).add(new CellReference(i, j));
                                         size = playbook.resources.get(resourceName).size();
-
                                     } else {
-                                        playbook.resources.put(resourceName, new ResourceWrapper(new CellRef(i, j)));
+                                        playbook.resources.put(resourceName, new Resource(new CellReference(i, j)));
                                         size = 1;
                                     }
                                     if (min != null) {
@@ -96,6 +102,10 @@ public class SheetReader {
                                     }
                                     if (max != null) {
                                         playbook.resources.get(resourceName).max = max;
+                                    }
+                                    if (movePenalty != null) {
+                                        playbook.movePenalties.put(movePenalty, new CellReference(i, j));
+                                        game.sendDebugMsg("Loaded move penalty: " + resourceName + " : movePenalty");
                                     }
                                     game.sendDebugMsg("Loaded resource: " + resourceName + " x" + size);
 
@@ -115,7 +125,7 @@ public class SheetReader {
                                     break;
                                 case new_playbook:
                                     checkAndRegisterPlayBook(playbook);
-                                    playbook = new Playbook(sheet.tab);
+                                    playbook = new Playbook(game.sheet, sheet.tab);
                                     playbook.title = sheet.getValue(i, j);
                                     game.sendDebugMsg(start_load_msg + playbook.title);
                                     break;
@@ -127,14 +137,14 @@ public class SheetReader {
 
                         }
                     } catch (IllegalArgumentException e) {
-                        CellRef cell = new CellRef(i, j);
+                        CellReference cell = new CellReference(i, j);
                         String emsg = "Unable to parse notation found in cell " + cell.getCellRef() + ", note= " + sheet.getNote(i, j);
                         logger.error(emsg);
                         game.sendGameMessage(emsg);
                         e.printStackTrace();
                     } catch (Throwable e){
-                        String ref = new CellRef(i, j).getCellRef();
-                        String emsg = e.toString() + " reading: "+ sheet.tab + "!"+ref;
+                        String ref = new CellReference(i, j).getCellRef();
+                        String emsg = e.toString() + " reading: " + sheet.tab + "!" + ref;
                         game.sendGameMessage(emsg);
                         logger.error(emsg);
                         e.printStackTrace();
@@ -216,7 +226,7 @@ public class SheetReader {
                     game.sendGameMessage("Playbook loaded, but multiple matching Discord Channel Members found for " + book.player);
                 }
             }
-            game.playbooks.put(book.player, book);
+            game.playbooks.playbooks.put(book.player, book);
         }
     }
 
