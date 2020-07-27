@@ -7,7 +7,7 @@ import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.Services.GameSheetService;
 import com.whiskytangofox.ptbadiscordbot.Services.PlaybookService;
-import com.whiskytangofox.ptbadiscordbot.Services.SheetReader;
+import com.whiskytangofox.ptbadiscordbot.Services.SheetReaderService;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -25,13 +25,13 @@ public class Game extends ChannelInstance {
     public Properties settings = new Properties();
     public PatriciaTrieIgnoreCase<Move> basicMoves = new PatriciaTrieIgnoreCase<>();
     public PlaybookService playbooks;
-    public final SheetReader reader;
+    public final SheetReaderService reader;
     public final GameSheetService sheet;
 
     public Game(Guild guild, MessageChannel channel, String sheetID, Boolean debug) throws IOException {
         super(guild, channel, debug);
         sheet = new GameSheetService(sheetID, googleSheetAPI, settings);
-        this.reader = new SheetReader(this);
+        this.reader = new SheetReaderService(this);
         this.playbooks = new PlaybookService(sheet);
         if (sheetID != null) try { //if sheetID == null, then we are running tests
             readSheet();
