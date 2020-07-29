@@ -46,6 +46,15 @@ public abstract class AbstractGameSheetMethods {
         try {
             sendDebugMsg("Sheets loaded, finalizing");
             copyAndStoreModifiedBasicMoves();
+            for (Playbook book : playbooks.playbooks.values()) {
+                String msg = book.getValidationMsg();
+                if (msg != null) {
+                    sendGameMsg(msg);
+                } else {
+                    sendDebugMsg(book.title + " validated");
+                }
+
+            }
         } catch (Exception e) {
             sendGameMsg("Unexpected exception while finalizing load: " + e.toString());
         }
@@ -79,7 +88,7 @@ public abstract class AbstractGameSheetMethods {
         for (Playbook book : playbooks.playbooks.values()) {
             HashMap<String, Move> buffer = new HashMap<>();
             for (Move advanced : book.moves.values()) {
-                for (String basicName : advanced.getModifiesMoves()) {
+                for (String basicName : advanced.getParentMoves()) {
                     try {
                         Move basic = buffer.get(basicName);
                         if (basic == null) {

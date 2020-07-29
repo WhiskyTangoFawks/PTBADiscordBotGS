@@ -51,7 +51,7 @@ public class PlaybookService {
         return getPlaybook(player).modifyResource(resource, mod);
     }
 
-    public int getMovePenalty(String player, String move) throws PlayerNotFoundException, IOException {
+    public int getMovePenalty(String player, String move) throws PlayerNotFoundException, IOException, KeyConflictException {
         return getPlaybook(player).getMovePenalty(move);
     }
 

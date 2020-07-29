@@ -3,6 +3,7 @@ package com.whiskytangofox.ptbadiscordbot.DataObjects;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
+import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
@@ -44,6 +45,7 @@ public class PlaybookTest {
         mockSheetService.settings = mockSettings;
         book = new Playbook(mockSheetService, null);
         book.player = testPlayer;
+        book.basicMoves = new PatriciaTrieIgnoreCase<>();
     }
 
     @Test
@@ -104,6 +106,11 @@ public class PlaybookTest {
         assertTrue(book.isResource("hp"));
     }
 
+    @Test
+    public void testIsMove() {
+        book.moves.put("move0", new Move("move", "move text"));
+        assertTrue(book.isMove("move0"));
+    }
 
     @Test
     public void testModifyResource_Integer_NoChange() throws IOException {
@@ -279,10 +286,41 @@ public class PlaybookTest {
     }
 
     @Test
-    public void testGetMovePenalty() throws IOException {
+    public void testGetMovePenalty() throws IOException, KeyConflictException {
         book.movePenalties.put("move", new CellReference("A1"));
         when(mockSheetService.getCellValue(any(), any())).thenReturn("-1");
         assertEquals(-1, book.getMovePenalty("move"));
+    }
+
+    //@Test
+    public void testGetMovePenalty_secondaryMove() throws IOException, KeyConflictException {
+        //TODO - implement this or commit to NOT doing it
+        book.movePenalties.put("move", new CellReference("A1"));
+        when(mockSheetService.getCellValue(any(), any())).thenReturn("-1");
+        assertEquals(-1, book.getMovePenalty("secondary (move)"));
+    }
+
+    @Test
+    public void testValidatePlaybook() {
+        book.stat_penalties.put("stat0", null);
+        book.stat_penalties.put("stat", null);
+        book.movePenalties.put("move0", null);
+        book.movePenalties.put("move", null);
+        book.stats.put("stat0", new CellReference("A1"));
+        book.moves.put("move0", new Move("move0", "move text"));
+
+        assertTrue(book.isMove("move0"));
+        assertFalse(book.moves.containsKey("move"));
+
+        assertTrue(book.isStat("stat0"));
+        assertFalse(book.isStat("stat"));
+
+        String validationString = book.getValidationMsg();
+        logger.info(validationString);
+        assertFalse(validationString.contains("move0"));
+        assertFalse(validationString.contains("stat0"));
+        assertTrue(validationString.contains("move"));
+        assertTrue(validationString.contains("stat"));
     }
 
 }

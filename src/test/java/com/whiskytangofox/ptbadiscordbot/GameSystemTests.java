@@ -25,9 +25,9 @@ import java.io.IOException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public class GameTest_GameFunctions {
+public class GameSystemTests {
 
-    public static final Logger logger = LoggerFactory.getLogger(GameTest_GameFunctions.class);
+    public static final Logger logger = LoggerFactory.getLogger(GameSystemTests.class);
 
     @Mock
     CommandInterpreterService mockInterpreter;

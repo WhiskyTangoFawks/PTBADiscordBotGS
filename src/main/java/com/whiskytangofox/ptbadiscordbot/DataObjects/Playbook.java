@@ -25,7 +25,7 @@ public class Playbook {
     public HashMapIgnoreCase<Resource> resources = new HashMapIgnoreCase<>();
     public HashMapIgnoreCase<String> moveOverrideDice = new HashMapIgnoreCase<>();
     public PatriciaTrieIgnoreCase<Move> moves = new PatriciaTrieIgnoreCase<>();
-    public HashMapIgnoreCase<CellReference> movePenalties = new HashMapIgnoreCase<>();
+    public PatriciaTrieIgnoreCase<CellReference> movePenalties = new PatriciaTrieIgnoreCase<>();
     public PatriciaTrieIgnoreCase<Move> basicMoves;
     public String tab;
     public SheetAPIService sheet;
@@ -116,7 +116,8 @@ public class Playbook {
         return new SetResourceResponse(resource, oldValue, mod, newValue);
     }
 
-    public int getMovePenalty(String move) throws IOException {
+    public int getMovePenalty(String move) throws IOException, KeyConflictException {
+        //String moveName = getMove(move).name;
         if (movePenalties.containsKey(move)) {
             return Integer.parseInt(sheet.getCellValue(tab, movePenalties.get(move).getCellRef()));
         }
@@ -127,8 +128,12 @@ public class Playbook {
         return moveOverrideDice.get(move);
     }
 
-    public boolean isMove(String string) throws KeyConflictException {
-        return getMove(string) != null;
+    public boolean isMove(String string) {
+        try {
+            return getMove(string) != null;
+        } catch (KeyConflictException e) {
+            return false;
+        }
     }
 
     public Move getMove(String move) throws KeyConflictException {
@@ -160,4 +165,21 @@ public class Playbook {
             return getStat(stat);
         }
     }
+
+    public String getValidationMsg() {
+        StringBuilder invalidMsg = new StringBuilder(title + System.lineSeparator());
+        movePenalties.keySet().stream()
+                .filter(m -> !(moves.containsKey(m) || basicMoves.containsKey(m)))
+                .forEach(m -> invalidMsg.append("found move penalty without move: "
+                        + m + System.lineSeparator()));
+        stat_penalties.keySet().stream()
+                .filter(m -> !isStat(m))
+                .forEach(m -> invalidMsg.append("found stat penalty without move: "
+                        + m + System.lineSeparator()));
+        if (invalidMsg.toString().equalsIgnoreCase(title + System.lineSeparator())) {
+            return null;
+        }
+        return invalidMsg.toString();
+    }
+
 }

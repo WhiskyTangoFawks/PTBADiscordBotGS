@@ -8,6 +8,8 @@ import java.util.SortedMap;
 
 public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
 
+    //TODO - implement a cleanKey(string) method
+
     @Override
     public E put(@NotNull String key, E value) {
         /*TODO - error on add close key

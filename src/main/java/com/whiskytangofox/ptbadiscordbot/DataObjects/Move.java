@@ -49,10 +49,10 @@ public class Move {
                 .collect(Collectors.toList());
     }
 
-    public Collection<String> getModifiesMoves(){
+    public Collection<String> getParentMoves() {
         HashSet<String> set = new HashSet<String>();
-        if (name.contains("(")){
-            String list = name.substring(name.indexOf("(")+1,name.indexOf(")"));
+        if (name.contains("(")) {
+            String list = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
             return Arrays.stream(list.split(",")).collect(Collectors.toList());
         }
         return set;

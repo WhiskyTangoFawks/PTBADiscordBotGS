@@ -35,6 +35,7 @@ public class CommandInterpreterService {
         if (command.move != null && command.stat == null) {
             command.stat = book.getMoveStat(command.move.name);
         }
+
     }
 
 

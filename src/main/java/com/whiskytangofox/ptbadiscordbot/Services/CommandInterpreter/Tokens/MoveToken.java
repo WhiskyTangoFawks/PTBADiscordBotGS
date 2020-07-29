@@ -10,18 +10,14 @@ public class MoveToken implements IToken {
 
     @Override
     public boolean matchesParameter(Playbook book, String string, int index) {
-        try {
-            return book.isMove(string);
-        } catch (KeyConflictException e) {
-            return false;
-        }
+        return book.isMove(string);
     }
 
     @Override
     public void execute(Playbook book, Command command, String string) throws IOException {
         try {
             command.move = book.getMove(string);
-            command.mod = command.mod + book.getMovePenalty(command.move.name);
+            command.mod = command.mod + book.getMovePenalty(command.move.getReferenceMoveName());
         } catch (KeyConflictException e) {
             //This checks isMove during matchesParameter, so it shouldnt ever be a problem
             e.printStackTrace();

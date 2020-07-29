@@ -17,10 +17,10 @@ import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class GameTest_SheetFunctions {
+public class GameSheetTest {
 
     Game game;
-    public static final Logger logger = LoggerFactory.getLogger(GameTest_SheetFunctions.class);
+    public static final Logger logger = LoggerFactory.getLogger(GameSheetTest.class);
 
     static MoveBuilder basicBuilder;
     static MoveBuilder advancedBuilder;
@@ -95,6 +95,35 @@ public class GameTest_SheetFunctions {
 
         assertTrue(book.moves.containsKey(advMove.name));
         assertTrue(book.moves.containsKey(basicMove.name));
+    }
+
+
+    @Test
+    public void testCopyAndStoreModifiedBasicMoves_TestForTwoMovesModifySameBasicMove() {
+        Move basicMove = new Move("Move", "move text");
+        game.basicMoves.put(basicMove.name, basicMove);
+
+        Playbook book = new Playbook(mockSheetService, null);
+        book.basicMoves = game.basicMoves;
+        book.player = "test";
+
+        Move adv1 = new Move("Secondary 1 (Move)", "Secondary move text Number 1");
+        Move adv2 = new Move("Secondary 2 (Move)", "Secondary Move text Number 2");
+
+        book.moves.put(adv1.name, adv1);
+        book.moves.put(adv2.name, adv2);
+        game.playbooks.put(book);
+
+        game.copyAndStoreModifiedBasicMoves();
+
+        assertTrue(book.moves.containsKey(basicMove.name));
+        assertTrue(book.moves.containsKey(adv1.name));
+        assertTrue(book.moves.containsKey(adv2.name));
+
+        Move modifiedBasic = book.moves.get(basicMove.name);
+        logger.info(modifiedBasic.text);
+        assertTrue(modifiedBasic.text.contains("Number 1"));
+        assertTrue(modifiedBasic.text.contains("Number 2"));
     }
 
     @Test
