@@ -12,16 +12,17 @@ public class Dice {
         this.num = num;
     }
 
-    public String getNotation(){
-        String msg = num+"d"+size;
-        /*
-        if (adv){
-            msg = msg + " adv";
-        }
-        if (dis){
-            msg = msg + " dis";
-        }
-        */
-        return msg;
+    public String getNotation() {
+        return num + "d" + size;
+    }
+
+    public Dice setAdv() {
+        this.adv = true;
+        return this;
+    }
+
+    public Dice setDis() {
+        this.dis = true;
+        return this;
     }
 }

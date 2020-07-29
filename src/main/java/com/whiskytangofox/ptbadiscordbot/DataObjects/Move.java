@@ -17,7 +17,9 @@ public class Move {
     public Move getModifiedCopy(Move secondaryMove) {
         Move copy = new Move(this.name, this.text);
 
-        copy.text = copy.text + System.lineSeparator() + secondaryMove.text;
+        copy.text = copy.text + System.lineSeparator()
+                + System.lineSeparator()
+                + secondaryMove.text;
         return copy;
     }
 

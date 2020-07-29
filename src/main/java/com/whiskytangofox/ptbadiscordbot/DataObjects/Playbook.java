@@ -1,14 +1,15 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.GetStatResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
+import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.HashMapIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.MissingValueException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
-import com.whiskytangofox.ptbadiscordbot.Services.GameSheetService;
+import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,10 +26,11 @@ public class Playbook {
     public HashMapIgnoreCase<String> moveOverrideDice = new HashMapIgnoreCase<>();
     public PatriciaTrieIgnoreCase<Move> moves = new PatriciaTrieIgnoreCase<>();
     public HashMapIgnoreCase<CellReference> movePenalties = new HashMapIgnoreCase<>();
+    public PatriciaTrieIgnoreCase<Move> basicMoves;
     public String tab;
-    public GameSheetService sheet;
+    public SheetAPIService sheet;
 
-    public Playbook(GameSheetService sheet, String tab) {
+    public Playbook(SheetAPIService sheet, String tab) {
         this.tab = tab;
         this.sheet = sheet;
     }
@@ -37,7 +39,7 @@ public class Playbook {
         return player != null && !player.isBlank() && !player.contains("<");
     }
 
-    public GetStatResponse getStat(String stat) throws IOException, DiscordBotException {
+    public StatResponse getStat(String stat) throws IOException, DiscordBotException {
         String statRef = stats.get(stat).getCellRef();
         String penaltyRef = stat_penalties.get(stat).getCellRef();
         ArrayList<String> list = new ArrayList<>();
@@ -52,7 +54,7 @@ public class Playbook {
             throw new MissingValueException("Player: " + player + ", Stat:" + stat + ", returned Not A Number, please correct your sheet");
         }
         boolean isDebilitated = Boolean.parseBoolean(response.get(1));
-        return new GetStatResponse(stat, intValue, isDebilitated);
+        return new StatResponse(stat, intValue, isDebilitated).setDebilityTag(getSetting(GameSettings.KEY.stat_debility_tag));
     }
 
     public boolean isStat(String stat) {
@@ -121,16 +123,23 @@ public class Playbook {
         return 0;
     }
 
-    public boolean isPlaybookMove(String move) throws KeyConflictException {
-        return getMove(move) != null;
+    public String getMoveDice(String move) {
+        return moveOverrideDice.get(move);
+    }
+
+    public boolean isMove(String string) throws KeyConflictException {
+        return getMove(string) != null;
     }
 
     public Move getMove(String move) throws KeyConflictException {
-        return moves.getClosestMatch(move);
+        if (moves.getClosestMatch(move) != null) {
+            return moves.getClosestMatch(move);
+        }
+        return basicMoves.getClosestMatch(move);
     }
 
-    public String getMoveDice(String move) {
-        return moveOverrideDice.get(move);
+    public String getSetting(GameSettings.KEY key) {
+        return sheet.settings.get(key);
     }
 
     boolean isInteger(String string) {
@@ -139,6 +148,16 @@ public class Playbook {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public StatResponse getMoveStat(String name) throws KeyConflictException, IOException, DiscordBotException {
+        Move move = getMove(name);
+        String stat = move.getMoveStat(stats.keySet());
+        if (stat == null) {
+            return null;
+        } else {
+            return getStat(stat);
         }
     }
 }

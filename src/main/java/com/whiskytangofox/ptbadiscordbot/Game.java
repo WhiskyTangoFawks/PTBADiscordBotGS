@@ -1,149 +1,112 @@
 package com.whiskytangofox.ptbadiscordbot;
 
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
-import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
-import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
-import com.whiskytangofox.ptbadiscordbot.Services.GameSheetService;
-import com.whiskytangofox.ptbadiscordbot.Services.PlaybookService;
-import com.whiskytangofox.ptbadiscordbot.Services.SheetReaderService;
+import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
+import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
+import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.CommandInterpreterService;
+import com.whiskytangofox.ptbadiscordbot.Services.DiceService;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.List;
 
-import static com.whiskytangofox.ptbadiscordbot.App.googleSheetAPI;
+import static com.whiskytangofox.ptbadiscordbot.App.logger;
 
-public class Game extends ChannelInstance {
+public class Game extends AbstractGameSheetMethods {
 
-    public Properties settings = new Properties();
-    public PatriciaTrieIgnoreCase<Move> basicMoves = new PatriciaTrieIgnoreCase<>();
-    public PlaybookService playbooks;
-    public final SheetReaderService reader;
-    public final GameSheetService sheet;
+    public final Guild guild;
+    public final MessageChannel channel;
+    protected final boolean debugLog;
+
+    protected CommandInterpreterService interpreter = new CommandInterpreterService();
+    protected DiceService rollerService = new DiceService();
 
     public Game(Guild guild, MessageChannel channel, String sheetID, Boolean debug) throws IOException {
-        super(guild, channel, debug);
-        sheet = new GameSheetService(sheetID, googleSheetAPI, settings);
-        this.reader = new SheetReaderService(this);
-        this.playbooks = new PlaybookService(sheet);
-        if (sheetID != null) try { //if sheetID == null, then we are running tests
-            readSheet();
-        } catch (Exception e) {
-            sendGameMessage("Unexpected exception while trying to read the game sheet");
-            throw e;
+        super(sheetID);
+        this.guild = guild;
+        this.channel = channel;
+        this.debugLog = debug;
+        if (sheetID != null) {
+            initGame();
+            postInit();
         }
     }
 
-    public void readSheet() throws IOException {
-        ArrayList<RangeWrapper> sheetData = sheet.getSheet();
-        sendDebugMsg("Google sheet retrieved");
-        for (RangeWrapper tab : sheetData) {
-            if (tab.tab.equalsIgnoreCase("properties")) {
-                readPropertiesTab(tab);
-            } else {
-                reader.parseSheet(tab);
-            }
-            sendDebugMsg("Parsed sheet: " + tab.tab);
+    public String OnMessageReceived(MessageReceivedEvent event) {
+        String msg = event.getMessage().getContentDisplay();
+        String player = event.getAuthor().getName();
+        String c = settings.get(GameSettings.KEY.commandchar);
+        if (c == null) {
+            sendDebugMsg("Missing game property: commandchar");
+            throw new NullPointerException("Missing game property: commandchar");
         }
-        //Post-load stuff goes here
         try {
-            sendDebugMsg("Sheets loaded, finalizing");
-            copyAndStoreModifiedBasicMoves();
-        } catch (Exception e){
-            sendGameMessage("Unexpected exception while finalizing load: " + e.toString());
-        }
-    }
+            if (msg.startsWith(c)) {// /alias string
+                msg = msg.toLowerCase().replace(c, "");
 
-    public void readPropertiesTab(RangeWrapper tab){
-        //TODO - refactor move this to sheet reader, have it return a collection instead of a setting the value
-        try {
-            tab.getValueSet().stream()
-                    .filter(Objects::nonNull)
-                    .filter(prop -> prop.contains("="))
-                    .forEach(prop -> settings.put(prop.split("=")[0], prop.split("=")[1]));
-            sendDebugMsg("Properties loaded");
-        } catch (Exception e){
-            sendGameMessage("Unexpected exception while trying to load properties");
-            throw e;
-        }
-    }
-
-    public void copyAndStoreModifiedBasicMoves() {
-        for (Playbook book : playbooks.playbooks.values()) {
-            HashMap<String, Move> buffer = new HashMap<>();
-            for (Move advanced : book.moves.values()) {
-                for (String basicName : advanced.getModifiesMoves()) {
-                    try {
-                        Move basic = buffer.get(basicName);
-                        if (basic == null) {
-                            basic = getMove(book.player, basicName);
-                        }
-                        if (basic != null) {
-                            Move copy = basic.getModifiedCopy(advanced);
-                            buffer.put(copy.name, copy);
-                        } else {
-                            sendGameMessage("Unable to find: "+ basicName + " while loading "+ advanced.name);
-                        }
-                    } catch (Exception e){
-                        sendGameMessage("Exception occurred while trying to load modified basic move: " + advanced.name);
-                        e.printStackTrace();
-                    }
+                Playbook book = playbooks.getPlaybook(player);
+                Command command = interpreter.interpretCommandString(book, msg);
+                String response = "";
+                if (command.move != null) {
+                    response = response + command.move.text + System.lineSeparator();
                 }
+                if (command.doRoll) {
+                    response = response
+                            + event.getAuthor().getAsMention()
+                            + " "
+                            + rollerService.roll(command);
+                } else if (command.resource != null) {
+                    response = response + book.modifyResource(command.resource, command.mod).getDescriptiveResult();
+                }
+                sendGameMsg(response);
+                return (response);
             }
-            book.moves.putAll(buffer);
+
+        } catch (Throwable e) {
+            sendGameMsg("Exception: " + e.toString());
+            e.printStackTrace();
+            return (e.toString());
+        }
+        return "No command character detected";
+    }
+
+    public void reloadGame() throws IOException {
+        initGame();
+        postInit();
+    }
+
+    public void sendGameMsg(String msg) {
+        if (channel != null) {
+            channel.sendMessage(msg).queue();
+        } else {
+            logger.info("Test result for sendGameMessage: " + msg);
         }
     }
 
     @Override
-    public void OnMessageReceived(MessageReceivedEvent event) {
-        String msg = event.getMessage().getContentDisplay();
-        String player = event.getAuthor().getName();
-        try {
-            if (msg.startsWith(settings.getProperty("commandchar"))) {// /alias string
-                msg = msg.toLowerCase().replace(settings.getProperty("commandchar"), "");
-                if (msg.replace(" ", "").equalsIgnoreCase("reloadgame")){
-                    reloadGame();
-                    sendGameMessage("Game successfully reloaded");
-                } else {
-                    ParsedCommand command = new ParsedCommand(this, player, msg);
-                    String response = "";
-                    if (command.move != null) {
-                        response = response + command.move.text + System.lineSeparator();
-                    }
-                    if (command.resultText != null) {
-                        response = response + event.getAuthor().getAsMention() + " " + command.resultText;
-                    }
-                    sendGameMessage(response);
-                }
-            }
+    public void sendGameMsg(String player, String msg) {
+        if (guild == null) {
+            return; //if no channel set, we are running tests
+        }
 
-        } catch (Throwable e) {
-            sendGameMessage("Exception: " + e.toString());
-            e.printStackTrace();
+        List<Member> members = guild.getMembersByEffectiveName(player, true);
+        if (members.size() == 1) {
+            String mention = members.get(0).getAsMention();
+            sendGameMsg(mention + " " + msg);
+        } else if (members.size() == 0) {
+            throw new IllegalArgumentException("multiple players found in channel for discord name " + player);
+        } else {
+            throw new IllegalArgumentException("No players found in channel for discord name " + player);
         }
     }
 
-    public void reloadGame() throws IOException {
-        readSheet();
-    }
-
-    public boolean isMove(String author, String string) throws KeyConflictException {
-        return getMove(author, string) != null;
-    }
-
-    public Move getMove(String player, String move) throws KeyConflictException {
-        if (playbooks.isPlaybookMove(player, move)) {
-            return playbooks.getMove(player, move);
+    public void sendDebugMsg(String msg) {
+        if (debugLog) {
+            sendGameMsg(msg);
         }
-        return basicMoves.getClosestMatch(move);
     }
-
 
 }

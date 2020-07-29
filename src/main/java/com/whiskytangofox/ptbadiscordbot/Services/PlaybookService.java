@@ -2,8 +2,9 @@ package com.whiskytangofox.ptbadiscordbot.Services;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.GetStatResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
+import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.HashMapIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
@@ -14,23 +15,23 @@ import java.util.Collection;
 
 public class PlaybookService {
 
-    public final GameSheetService sheet;
+    public final SheetAPIService sheet;
     public HashMapIgnoreCase<Playbook> playbooks = new HashMapIgnoreCase<>();
 
-    public PlaybookService(GameSheetService sheet) {
+    public PlaybookService(SheetAPIService sheet) {
         this.sheet = sheet;
     }
 
-    private Playbook getPlaybook(String player) throws PlayerNotFoundException {
+    public Playbook getPlaybook(String player) throws PlayerNotFoundException {
         if (!playbooks.containsKey(player)) {
             throw new PlayerNotFoundException("No playbook found registered to " + player);
         }
         return playbooks.get(player);
     }
 
-    public GetStatResponse getStat(String author, String stat) throws IOException, DiscordBotException {
-        GetStatResponse response = getPlaybook(author).getStat(stat);
-        response.debilityTag = sheet.settings.getProperty("stat_debility_tag");
+    public StatResponse getStat(String author, String stat) throws IOException, DiscordBotException {
+        StatResponse response = getPlaybook(author).getStat(stat);
+        response.debilityTag = sheet.settings.get(GameSettings.KEY.stat_debility_tag);
         return response;
     }
 

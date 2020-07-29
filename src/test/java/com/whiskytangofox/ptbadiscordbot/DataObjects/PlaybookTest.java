@@ -1,13 +1,12 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.GetStatResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
+import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
-import com.whiskytangofox.ptbadiscordbot.Exceptions.PlayerNotFoundException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
-import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
-import com.whiskytangofox.ptbadiscordbot.Services.GameSheetService;
-import com.whiskytangofox.ptbadiscordbot.Services.PlaybookService;
+import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -19,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -31,253 +29,260 @@ public class PlaybookTest {
     public static final Logger logger = LoggerFactory.getLogger(PlaybookTest.class);
 
     @Mock
-    static GoogleSheetAPI mockApi;
+    SheetAPIService mockSheetService;
 
-    GameSheetService mockSheetService;
+    @Mock
+    GameSettings mockSettings;
 
-    PlaybookService playbookService;
+    Playbook book;
+
+    String testPlayer = "test";
 
     @Before
     public void before() {
         MockitoAnnotations.initMocks(this);
-        mockSheetService = new GameSheetService(null, mockApi, new Properties());
-        playbookService = new PlaybookService(mockSheetService);
+        mockSheetService.settings = mockSettings;
+        book = new Playbook(mockSheetService, null);
+        book.player = testPlayer;
+    }
+
+    @Test
+    public void testIsStat() {
+        book.stats.put("str", new CellReference("A1"));
+        book.stat_penalties.put("str", new CellReference("A2"));
+
+        assertTrue(book.isStat("str"));
+        assertTrue(book.isStat("STR"));
+        assertFalse(book.isStat("blood"));
     }
 
     @Test
     public void testGetStat() throws IOException, DiscordBotException {
         Playbook book = new Playbook(mockSheetService, null);
-        book.player = "test";
+
         book.stats.put("str", new CellReference("A1"));
         book.stat_penalties.put("str", new CellReference("A2"));
-        playbookService.playbooks.put("test", book);
+        when(mockSettings.get(GameSettings.KEY.stat_debility_tag)).thenReturn("dis");
 
         //Mocks
-        ArrayList<String> mockValues = new ArrayList<String>();
+        ArrayList<String> mockValues = new ArrayList<>();
         mockValues.add("+2");
         mockValues.add("FALSE");
-        ArrayList<String> cells = new ArrayList<String>();
+
+        when(mockSheetService.getValues(any(), any())).thenReturn(mockValues);
+        StatResponse result = book.getStat("str");
+        assertEquals(2, result.modStat);
+        assertEquals("dis", result.debilityTag);
+    }
+
+    @Test
+    public void testGetMoveStat() throws KeyConflictException, DiscordBotException, IOException {
+        book.moves.put("move", new Move("Move", "roll +stat"));
+        book.stats.put("stat", new CellReference("A1"));
+        book.stat_penalties.put("stat", new CellReference("A2"));
+        when(mockSettings.get(GameSettings.KEY.stat_debility_tag)).thenReturn("dis");
+
+        //MockStatResponse
+        ArrayList<String> mockValues = new ArrayList<>();
+        mockValues.add("+2");
+        mockValues.add("FALSE");
+        ArrayList<String> cells = new ArrayList<>();
         cells.add("A1");
         cells.add("A2");
-        when(mockApi.getValues(any(), any(), any())).thenReturn(mockValues);
-        GetStatResponse result = playbookService.getStat("test", "str");
-        assertEquals(2, result.modStat);
+        when(mockSheetService.getValues(any(), any())).thenReturn(mockValues);
+
+        StatResponse response = book.getMoveStat("move");
+        assertEquals("stat", response.stat);
+        assertEquals(2, response.modStat);
+        assertFalse(response.isDebilitated);
+        assertEquals("dis", response.debilityTag);
     }
 
     @Test
-    public void testIsStat() {
-        Playbook book = new Playbook(mockSheetService, "test");
-        book.player = "test";
-        book.stats.put("str", new CellReference("A1"));
-        book.stat_penalties.put("str", new CellReference("A2"));
-        playbookService.playbooks.put("test", book);
-        assertTrue(playbookService.isStat("test", "str"));
-        assertTrue(playbookService.isStat("test", "STR"));
-        assertFalse(playbookService.isStat("test", "blood"));
-    }
-
-    @Test
-    public void testIsResource() throws PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testIsResource() {
         book.resources.put("hp", new Resource(new CellReference("A1")));
-        playbookService.playbooks.put("test1", book);
-        assertTrue(playbookService.playbooks.containsKey("test1"));
-        assertTrue(playbookService.playbooks.get("test1").resources.containsKey("hp"));
-        assertTrue(playbookService.isResource("test1", "hp"));
+        assertTrue(book.isResource("hp"));
     }
 
 
     @Test
-    public void testModifyResource_Integer_NoChange() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Integer_NoChange() throws IOException {
         book.resources.put("hp", new Resource(new CellReference("A1")));
-        playbookService.playbooks.put("test1", book);
+
         ArrayList<String> mockResult = new ArrayList<>();
         mockResult.add("10");
-        when(mockApi.getValues(any(), any(), any())).thenReturn(mockResult);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", 0);
+        when(mockSheetService.getValues(any(), any())).thenReturn(mockResult);
+        SetResourceResponse result = book.modifyResource("hp", 0);
         assertEquals(0, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(10, result.newValue);
-        verify(mockApi, times(0)).setValues(any(), any(), any(), any());
+        verify(mockSheetService, times(0)).setValues(any(), any(), any());
     }
 
 
     @Test
-    public void testModifyResource_Integer_Change() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Integer_Change() throws IOException {
         book.resources.put("hp", new Resource(new CellReference("A1")));
-        playbookService.playbooks.put("test1", book);
+
         ArrayList<String> sheetValues = new ArrayList<>();
         sheetValues.add("10");
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", 1);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", 1);
         assertEquals(1, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(11, result.newValue);
-        verify(mockApi, times(1)).setValues(any(), any(), any(), any());
+        verify(mockSheetService, times(1)).setValues(any(), any(), any());
     }
 
     @Test
-    public void testModifyResource_Integer_ChangeMax() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Integer_ChangeMax() throws IOException {
+
         Resource resource = new Resource(new CellReference("A1"));
         resource.min = 0;
         resource.max = 20;
         book.resources.put("hp", resource);
-        playbookService.playbooks.put("test1", book);
+
         ArrayList<String> sheetValues = new ArrayList<>();
         sheetValues.add("10");
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", 20);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", 20);
         assertEquals(20, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(20, result.newValue);
-        verify(mockApi, times(1)).setValues(any(), any(), any(), any());
+        verify(mockSheetService, times(1)).setValues(any(), any(), any());
     }
 
     @Test
-    public void testModifyResource_Integer_ChangeMin() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Integer_ChangeMin() throws IOException {
+
         Resource resource = new Resource(new CellReference("A1"));
         resource.min = 0;
         resource.max = 20;
         book.resources.put("hp", resource);
-        playbookService.playbooks.put("test1", book);
+
         ArrayList<String> sheetValues = new ArrayList<>();
         sheetValues.add("10");
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", -20);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", -20);
         assertEquals(-20, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(0, result.newValue);
-        verify(mockApi, times(1)).setValues(any(), any(), any(), any());
+        verify(mockSheetService, times(1)).setValues(any(), any(), any());
     }
 
 
     @Test
-    public void testModifyResource_Checklist_NoChange() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Checklist_NoChange() throws IOException {
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellReference> listCellRefs = new ArrayList<>(Arrays.stream(cellRefs)
-                .map(c -> new CellReference(c)).collect(Collectors.toList()));
+                .map(CellReference::new).collect(Collectors.toList()));
         book.resources.put("hp", new Resource(listCellRefs));
-        playbookService.playbooks.put("test1", book);
+
         String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", 0);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", 0);
         assertEquals(0, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(3, result.newValue);
         String[] expectedArr = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
-        verify(mockApi, times(0))
-                .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
+        verify(mockSheetService, times(0))
+                .setValues(null, Arrays.asList(cellRefs), expectedList);
     }
 
     @Test
-    public void testModifyResource_Checklist_PosChange() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Checklist_PosChange() throws IOException {
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellReference> listCellRefs = new ArrayList<>(Arrays.stream(cellRefs)
                 .map(c -> new CellReference(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new Resource(listCellRefs));
-        playbookService.playbooks.put("test1", book);
         String[] arrValues = {"TRUE", "TRUE", "FALSE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", 2);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", 2);
         assertEquals(2, result.mod);
         assertEquals(2, result.oldValue);
         assertEquals(4, result.newValue);
         String[] expectedArr = {"TRUE", "TRUE", "TRUE", "TRUE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
-        verify(mockApi, times(1))
-                .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
+        verify(mockSheetService, times(1))
+                .setValues(null, Arrays.asList(cellRefs), expectedList);
     }
 
     @Test
-    public void testModifyResource_Checklist_NegChange() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Checklist_NegChange() throws IOException {
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellReference> listCellRefs = new ArrayList<>(Arrays.stream(cellRefs)
                 .map(c -> new CellReference(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new Resource(listCellRefs));
-        playbookService.playbooks.put("test1", book);
+
         String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", -2);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", -2);
         assertEquals(-2, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(1, result.newValue);
         String[] expectedArr = {"TRUE", "FALSE", "FALSE", "FALSE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
-        verify(mockApi, times(1))
-                .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
+        verify(mockSheetService, times(1))
+                .setValues(null, Arrays.asList(cellRefs), expectedList);
     }
 
     @Test
-    public void testModifyResource_Checklist_NegChangeLimited() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Checklist_NegChangeLimited() throws IOException {
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellReference> listCellRefs = new ArrayList(Arrays.asList(cellRefs).stream()
                 .map(c -> new CellReference(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new Resource(listCellRefs));
-        playbookService.playbooks.put("test1", book);
+
         String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", -4);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", -4);
         assertEquals(-4, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(0, result.newValue);
         String[] expectedArr = {"FALSE", "FALSE", "FALSE", "FALSE", "FALSE"};
         List<String> expectedList = Arrays.asList(expectedArr);
-        verify(mockApi, times(1))
-                .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
+        verify(mockSheetService, times(1))
+                .setValues(null, Arrays.asList(cellRefs), expectedList);
     }
 
     @Test
-    public void testModifyResource_Checklist_PosChangeLimited() throws IOException, PlayerNotFoundException {
-        Playbook book = new Playbook(mockSheetService, "test");
+    public void testModifyResource_Checklist_PosChangeLimited() throws IOException {
         String[] cellRefs = {"A1", "A2", "A3", "A4", "A5"};
         ArrayList<CellReference> listCellRefs = new ArrayList<>(Arrays.stream(cellRefs)
                 .map(c -> new CellReference(c)).collect(Collectors.toList()));
 
         book.resources.put("hp", new Resource(listCellRefs));
-        playbookService.playbooks.put("test1", book);
         String[] arrValues = {"TRUE", "TRUE", "TRUE", "FALSE", "FALSE"};
         List<String> sheetValues = Arrays.asList(arrValues);
 
-        when(mockApi.getValues(any(), any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = playbookService.modifyResource("test1", "hp", 10);
+        when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
+        SetResourceResponse result = book.modifyResource("hp", 10);
         assertEquals(10, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(5, result.newValue);
         String[] expectedArr = {"TRUE", "TRUE", "TRUE", "TRUE", "TRUE"};
         List<String> expectedList = Arrays.asList(expectedArr);
-        verify(mockApi, times(1))
-                .setValues(null, "test", Arrays.asList(cellRefs), expectedList);
+        verify(mockSheetService, times(1))
+                .setValues(null, Arrays.asList(cellRefs), expectedList);
     }
 
     @Test
-    public void isPlaybookMove() {
+    public void testGetMovePenalty() throws IOException {
+        book.movePenalties.put("move", new CellReference("A1"));
+        when(mockSheetService.getCellValue(any(), any())).thenReturn("-1");
+        assertEquals(-1, book.getMovePenalty("move"));
     }
 
-    @Test
-    public void getMove() {
-    }
-
-    @Test
-    public void getMoveDice() {
-    }
 }

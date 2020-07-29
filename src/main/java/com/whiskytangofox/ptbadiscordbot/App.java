@@ -50,16 +50,15 @@ public class App extends ListenerAdapter {
         }
         String msg = event.getMessage().getContentDisplay();
 
-        if (msg.contains("docs.google.com/spreadsheets")) {
-            registerGame(event.getGuild(), event.getChannel(), msg);
-        }
-
         if (registeredGames.containsKey(event.getChannel())) {
             registeredGames.get(event.getChannel()).OnMessageReceived(event);
         } else if (msg.startsWith("!")) {
-            event.getChannel().sendMessage("No game registered for this channel, pleace post your google sheet URL in the chat if you want to use this bot");
+            event.getChannel().sendMessage("No game registered for this channel, please post your google sheet URL in the chat if you want to use this bot");
         }
 
+        if (msg.contains("docs.google.com/spreadsheets")) {
+            registerGame(event.getGuild(), event.getChannel(), msg);
+        }
     }
 
     public boolean registerGame(Guild guild, MessageChannel channel, String msg) {
