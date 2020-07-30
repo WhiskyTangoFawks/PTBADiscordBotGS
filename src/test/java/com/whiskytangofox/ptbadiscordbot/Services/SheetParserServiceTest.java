@@ -108,7 +108,6 @@ public class SheetParserServiceTest {
         assertNotNull(game.playbooks.playbooks.get("discordName"));
     }
 
-
     @Test
     public void testReadSheetBadNote(){
         notes.put(new CellReference("A1"), "this should throw an exception");

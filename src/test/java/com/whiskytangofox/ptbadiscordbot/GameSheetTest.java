@@ -1,7 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
-import com.whiskytangofox.ptbadiscordbot.DataObjects.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
@@ -22,29 +21,18 @@ public class GameSheetTest {
     Game game;
     public static final Logger logger = LoggerFactory.getLogger(GameSheetTest.class);
 
-    static MoveBuilder basicBuilder;
-    static MoveBuilder advancedBuilder;
-
     @Mock
     static GoogleSheetAPI mockApi;
 
     SheetAPIService mockSheetService;
+    Move move;
+    Move secondaryMove;
+    Playbook book;
 
     @BeforeClass
     public static void beforeClass() {
         logger.info("Running @BeforeClass Setup");
 
-        basicBuilder = new MoveBuilder();
-        basicBuilder.addLine();
-        basicBuilder.set(0, "Basic Move");
-        basicBuilder.addLine();
-        basicBuilder.set(1, "basic move text roll +STR:");
-
-        advancedBuilder = new MoveBuilder();
-        advancedBuilder.addLine();
-        advancedBuilder.set(0, "Advanced Move (Basic Move)");
-        advancedBuilder.addLine();
-        advancedBuilder.set(1, "advanced move text roll +INT:");
     }
 
     @Before
@@ -52,40 +40,38 @@ public class GameSheetTest {
         game = new Game(null, null, null, false);
         MockitoAnnotations.initMocks(this);
         mockSheetService = new SheetAPIService(null, mockApi, game.settings);
-
+        move = new Move("Basic Move", "basic move text roll +STR:");
+        secondaryMove = new Move("Advanced Move (Basic Move)", "advanced move text roll +INT:");
+        book = new Playbook(mockSheetService, null);
+        book.player = "test";
     }
 
     @Test
     public void testCopyAndStoreModifiedBasicMoves() {
-        Move basicMove = basicBuilder.getMove();
-        game.basicMoves.put(basicMove.name, basicMove);
-
-        Move advMove = advancedBuilder.getMove();
-        Playbook book = new Playbook(mockSheetService, null);
+        game.basicMoves.put(move.name, move);
         book.basicMoves = game.basicMoves;
-        book.player = "test";
-        book.moves.put(advMove.name, advMove);
+
+        book.moves.put(secondaryMove.name, secondaryMove);
         game.playbooks.put(book);
 
         game.copyAndStoreModifiedBasicMoves();
 
-        assertTrue(book.moves.containsKey(advMove.name));
-        assertTrue(book.moves.containsKey(basicMove.name));
+        assertTrue(book.moves.containsKey(move.name));
+        assertTrue(book.moves.containsKey(move.name));
     }
 
     @Test
     public void testCopyAndStoreModifiedBasicMoves_ConcurrentModException() {
-        Move basicMove = basicBuilder.getMove();
-        game.basicMoves.put(basicMove.name, basicMove);
+
+        game.basicMoves.put(move.name, move);
         game.basicMoves.put("filler1", new Move("filler1", "text"));
         game.basicMoves.put("filler2", new Move("filler2", "text"));
         game.basicMoves.put("filler3", new Move("filler3", "text"));
 
-        Move advMove = advancedBuilder.getMove();
         Playbook book = new Playbook(mockSheetService, null);
         book.basicMoves = game.basicMoves;
         book.player = "test";
-        book.moves.put(advMove.name, advMove);
+        book.moves.put(secondaryMove.name, secondaryMove);
         book.moves.put("pbfiller1", new Move("pbfiller1", "text"));
         book.moves.put("pbfiller2", new Move("pbfiller2", "text"));
         book.moves.put("pbfiller3", new Move("pbfiller3", "text"));
@@ -93,8 +79,8 @@ public class GameSheetTest {
 
         game.copyAndStoreModifiedBasicMoves();
 
-        assertTrue(book.moves.containsKey(advMove.name));
-        assertTrue(book.moves.containsKey(basicMove.name));
+        assertTrue(book.moves.containsKey(secondaryMove.name));
+        assertTrue(book.moves.containsKey(move.name));
     }
 
 
@@ -128,17 +114,14 @@ public class GameSheetTest {
 
     @Test
     public void testGetMovePlaybookOverrideBasic() throws KeyConflictException {
-        Move basic = basicBuilder.getMove();
-        basic.text = "Basic Move Text";
-        game.basicMoves.put(basic.name, basic);
 
-        Move override = basicBuilder.getMove();
-        override.text = "override move text";
-        Playbook book = new Playbook(mockSheetService, null);
-        book.player = "test";
-        book.moves.put(basic.name, override);
+        game.basicMoves.put(move.name, move);
+
+        Move override = new Move(move.name, "override move text");
+
+        book.moves.put(override.name, override);
         game.playbooks.put(book);
-        assertEquals("override move text", book.getMove(basic.getReferenceMoveName()).text);
+        assertEquals("override move text", book.getMove(move.getReferenceMoveName()).text);
     }
 
 }

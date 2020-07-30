@@ -107,18 +107,6 @@ public class CommandInterpreterServiceTest {
     }
 
     @Test
-    public void testFinalizeCommandString_GetMovePenalty() throws KeyConflictException, DiscordBotException, IOException {
-        //TODO
-        when(mockBook.getMovePenalty("move")).thenReturn(-100);
-        Command command = new Command(mockBook, "testString");
-        command.doRoll = true;
-        command.move = new Move("move", "roll");
-        underTest.finalizeCommand(mockBook, command);
-        assertEquals(-100, command.mod);
-    }
-
-
-    @Test
     public void tokenizeStringCommand_long() {
         List<RawToken> result = underTest.tokenizeStringCommand(mockBook, "roll move stat +2 adv");
         assertEquals(5, result.size());

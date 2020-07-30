@@ -167,7 +167,8 @@ public class Playbook {
     }
 
     public String getValidationMsg() {
-        StringBuilder invalidMsg = new StringBuilder(title + System.lineSeparator());
+        String starter = "Found sheet errors in " + title + System.lineSeparator();
+        StringBuilder invalidMsg = new StringBuilder(starter);
         movePenalties.keySet().stream()
                 .filter(m -> !(moves.containsKey(m) || basicMoves.containsKey(m)))
                 .forEach(m -> invalidMsg.append("found move penalty without move: "
@@ -176,7 +177,7 @@ public class Playbook {
                 .filter(m -> !isStat(m))
                 .forEach(m -> invalidMsg.append("found stat penalty without move: "
                         + m + System.lineSeparator()));
-        if (invalidMsg.toString().equalsIgnoreCase(title + System.lineSeparator())) {
+        if (invalidMsg.toString().equalsIgnoreCase(starter)) {
             return null;
         }
         return invalidMsg.toString();

@@ -292,7 +292,7 @@ public class PlaybookTest {
         assertEquals(-1, book.getMovePenalty("move"));
     }
 
-    //@Test
+    @Test
     public void testGetMovePenalty_secondaryMove() throws IOException, KeyConflictException {
         //TODO - implement this or commit to NOT doing it
         book.movePenalties.put("move", new CellReference("A1"));

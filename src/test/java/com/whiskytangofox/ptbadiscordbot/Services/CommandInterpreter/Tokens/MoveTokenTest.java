@@ -32,7 +32,7 @@ public class MoveTokenTest extends ITokenTest {
     public void testExecute_WithMovePenalty() throws KeyConflictException, IOException {
         Move move = new Move("Move", "Move Text");
         when(mockBook.getMove("Move")).thenReturn(move);
-        when(mockBook.getMovePenalty("Move")).thenReturn(-1);
+        when(mockBook.getMovePenalty("move")).thenReturn(-1);
 
         underTest.execute(mockBook, command, "Move");
         assertEquals(move, command.move);

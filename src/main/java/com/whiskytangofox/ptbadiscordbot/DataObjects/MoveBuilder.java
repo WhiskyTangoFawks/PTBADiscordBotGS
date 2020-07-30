@@ -7,12 +7,16 @@ public class MoveBuilder {
 
     private final ArrayList<String> builder = new ArrayList<String>();
 
-    public MoveBuilder addLine(){
+    public String overrideName = null;
+    public String overrideText = null;
+    public boolean isList = false;
+
+    public MoveBuilder addLine() {
         builder.add("");
         return this;
     }
 
-    public MoveBuilder addLine(String string){
+    public MoveBuilder addLine(String string) {
         builder.add(string);
         return this;
     }
@@ -29,27 +33,28 @@ public class MoveBuilder {
         builder.set(index, builder.get(index).isBlank() ? string : builder.get(index) + " " + string);
     }
 
-    public boolean isValid(){
-            return builder.size() > 1 &&
-                    !builder.get(0).isBlank() &&
-                    !builder.get(1).isBlank();
-    }
-
     public Move getMove() {
-        StringBuffer moveText = new StringBuffer();
-        for (int i = 0; i < builder.size(); i++) {
-            if (i > 0) {
-                moveText.append(System.lineSeparator());
-            }
-            if (i == 0) {
-                moveText.append("**" + builder.get(i) + "**");
-            } else {
-                moveText.append(builder.get(i));
-            }
-
+        String moveName;
+        if (overrideName != null) {
+            moveName = overrideName;
+        } else {
+            moveName = builder.get(0);
+            builder.remove(0);
         }
 
-        Move move = new Move(builder.get(0), moveText.toString());
+        StringBuffer moveText = new StringBuffer("**" + moveName + "**" + System.lineSeparator());
+        if (overrideText != null) {
+            moveText.append(overrideText);
+        } else {
+            for (int i = 0; i < builder.size(); i++) {
+                if (i > 0) {
+                    moveText.append(System.lineSeparator());
+                }
+                moveText.append(builder.get(i));
+            }
+        }
+
+        Move move = new Move(moveName, moveText.toString());
         return move;
     }
 

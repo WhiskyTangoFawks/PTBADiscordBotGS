@@ -23,11 +23,7 @@ public class MoveBuilderTest {
 
     @BeforeClass
     public static void buildHackAndSlash(){
-        builder = new MoveBuilder();
-        builder.addLine();
-        builder.set(0, hack[0]);
-        builder.addLine();
-        builder.set(1, hack[1]);
+
     }
 
     @Before
@@ -36,16 +32,37 @@ public class MoveBuilderTest {
     }
 
     @Test
-    public void getModifiesMoves() {
+    public void testBuild() {
+        builder = new MoveBuilder();
+        builder.addLine(hack[0]);
+        builder.addLine(hack[1]);
+
+        Move move = builder.getMove();
+        assertEquals(hack[0], move.name);
+        assertEquals("**" + hack[0] + "**" + System.lineSeparator() + hack[1], move.text);
     }
 
     @Test
-    public void testBuild(){
+    public void testBuild_overrideName() {
+        builder = new MoveBuilder();
+        builder.overrideName = "Move";
+        builder.addLine("move text");
+
         Move move = builder.getMove();
-        assertEquals(hack[0], move.name);
-        assertEquals("**"+hack[0]+"**"+System.lineSeparator()+hack[1], move.text);
+        assertEquals("Move", move.name);
+        assertEquals("**Move**" + System.lineSeparator() + "move text", move.text);
     }
 
+    @Test
+    public void testBuild_overrideText() {
+        builder = new MoveBuilder();
+        builder.addLine("Move");
+        builder.overrideText = "move text";
+
+        Move move = builder.getMove();
+        assertEquals("Move", move.name);
+        assertEquals("**Move**" + System.lineSeparator() + "move text", move.text);
+    }
 
 
 }
