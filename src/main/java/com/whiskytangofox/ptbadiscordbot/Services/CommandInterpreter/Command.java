@@ -33,8 +33,8 @@ public class Command {
     public boolean doRoll = false;
 
     public void setDefaultDice() {
-        if (move != null && book.getMoveDice(move.name) != null) {
-            parseDieNotation(book.getMoveDice(move.name));
+        if (move != null && book.getMoveDice(move.getReferenceMoveName()) != null) {
+            parseDieNotation(book.getMoveDice(move.getReferenceMoveName()));
         } else {
             parseDieNotation(book.getSetting(GameSettings.KEY.default_system_dice));
             failMsg = Boolean.parseBoolean(book.getSetting(GameSettings.KEY.fail_xp));

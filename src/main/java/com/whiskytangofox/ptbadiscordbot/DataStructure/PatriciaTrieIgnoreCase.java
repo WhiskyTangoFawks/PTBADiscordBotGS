@@ -8,8 +8,6 @@ import java.util.SortedMap;
 
 public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
 
-    //TODO - implement a cleanKey(string) method
-
     @Override
     public E put(@NotNull String key, E value) {
         /*TODO - error on add close key
@@ -26,32 +24,31 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
             }
         }
          */
-        key = key.toLowerCase().replace(" ", "");
-        return super.put(key, value);
+        return super.put(cleanKey(key), value);
     }
 
     @Override
     public SortedMap prefixMap(String key) {
-        return super.prefixMap(key.toLowerCase().replace(" ", ""));
+        return super.prefixMap(cleanKey(key));
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return super.containsKey(((String)key).toLowerCase().replace(" ", ""));
+        return super.containsKey(cleanKey((String) key));
     }
 
     @Override
     public E get(Object k) {
-        return super.get(((String)k).toLowerCase().replace(" ", ""));
+        return super.get(cleanKey((String) k));
     }
 
     public E getClosestMatch(String k) throws KeyConflictException {
-        k = k.toLowerCase().replace(" ", "");
+        k = cleanKey(k);
         if (this.containsKey(k)) {
             return this.get(k);
         } else if (this.prefixMap(k).size() == 1) {
             return this.get(this.prefixMap(k).firstKey());
-        } else if (this.prefixMap(k).size() > 1){
+        } else if (this.prefixMap(k).size() > 1) {
             throw new KeyConflictException("The key matches multiple entries: " + k);
         } else { //(this.prefixMap(k).size() ==0)
             //TODO - try getting all keys which contain the exact message
@@ -59,5 +56,12 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
             //ToDo - spelling mistakes?
             return null;
         }
+    }
+
+    public String cleanKey(String key) {
+        if (key.contains("(")) {
+            key = key.substring(0, key.indexOf("(") - 1);
+        }
+        return key.toLowerCase().replace(" ", "");
     }
 }

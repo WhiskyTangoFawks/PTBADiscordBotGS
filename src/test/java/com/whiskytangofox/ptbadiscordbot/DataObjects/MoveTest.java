@@ -47,7 +47,11 @@ public class MoveTest {
         assertNull(wrapper.getMoveStat(stats));
     }
 
-
+    @Test
+    public void getMoveReferenceName() {
+        Move move = new Move("Move (Test)", "test text +str");
+        assertEquals("move", move.getReferenceMoveName());
+    }
 
 
 }

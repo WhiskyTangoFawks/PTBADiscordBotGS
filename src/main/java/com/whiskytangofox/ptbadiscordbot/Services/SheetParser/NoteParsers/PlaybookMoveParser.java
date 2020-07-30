@@ -14,9 +14,9 @@ public class PlaybookMoveParser extends AbstractMoveParser implements INoteParse
         if (builder != null) {
             Move move = builder.getMove();
             if (!builder.skipLoad) {
-                playbook.moves.put(move.name, move);
+                playbook.moves.put(move.getReferenceMoveName(), move);
             } else {
-                service.registerSkippedMove(move.name);
+                service.registerSkippedMove(move.getReferenceMoveName());
             }
             return move.name;
         }

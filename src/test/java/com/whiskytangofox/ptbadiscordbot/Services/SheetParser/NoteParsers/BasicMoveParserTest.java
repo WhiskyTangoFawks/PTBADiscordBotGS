@@ -41,7 +41,7 @@ public class BasicMoveParserTest extends INoteParserTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(service).registerSkippedMove(captor.capture());
-        assertEquals("Skipped Move", captor.getValue());
+        assertEquals("skippedmove", captor.getValue());
     }
 
 }

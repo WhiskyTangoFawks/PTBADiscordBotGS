@@ -69,7 +69,7 @@ public class CommandTest {
     @Test
     public void testSetDefaultDiceWithMoveWithOverride() {
         command.move = new Move("Move", "move text");
-        when(mockBook.getMoveDice("Move")).thenReturn("1d10");
+        when(mockBook.getMoveDice("move")).thenReturn("1d10");
         command.setDefaultDice();
         assertEquals(1, command.dice.size());
         assertEquals(1, command.dice.get(0).num);

@@ -24,7 +24,11 @@ public class Move {
     }
 
     public String getReferenceMoveName() {
-        return this.name.toLowerCase().replace(" ", "");
+        String result = this.name.toLowerCase().replace(" ", "");
+        if (result.contains("(")) {
+            result = result.substring(0, result.indexOf("("));
+        }
+        return result;
     }
 
     public String getMoveStat(Collection<String> stats) {
@@ -53,6 +57,7 @@ public class Move {
         HashSet<String> set = new HashSet<String>();
         if (name.contains("(")) {
             String list = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
+            //list = list.replace(" ", "").toLowerCase();
             return Arrays.stream(list.split(",")).collect(Collectors.toList());
         }
         return set;

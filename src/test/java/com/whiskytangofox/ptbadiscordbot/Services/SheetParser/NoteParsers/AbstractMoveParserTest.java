@@ -99,6 +99,17 @@ public class AbstractMoveParserTest extends INoteParserTest {
     }
 
     @Test
+    public void testParseMoveBooleanTitleFalseWithOverride() {
+        values.put(new CellReference("A1"), "FALSE");
+        notes.put(new CellReference("A1"), "playbook_move=Move");
+        values.put(new CellReference("B1"), "Move Text");
+
+        MoveBuilder builder = parser.parseMove(sheet, 1, 1);
+        assertTrue(builder.skipLoad);
+        assertEquals("Move", builder.getMove().name);
+    }
+
+    @Test
     public void testParseMoveNotList() {
         values.put(new CellReference("A1"), "test basic move");
         values.put(new CellReference("A2"), "text 1");

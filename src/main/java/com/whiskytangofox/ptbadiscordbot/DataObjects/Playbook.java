@@ -177,9 +177,9 @@ public class Playbook {
         String starter = "Found sheet errors in " + title + System.lineSeparator();
         StringBuilder invalidMsg = new StringBuilder(starter);
         movePenalties.keySet().stream()
-                .filter(m -> !(moves.containsKey(m)))
-                .filter(m -> !(basicMoves.containsKey(m)))
-                .filter(m -> !(skippedMoves.contains(m)))
+                .filter(m -> !(moves.containsKey(cleanString(m))))
+                .filter(m -> !(basicMoves.containsKey(cleanString(m))))
+                .filter(m -> !(skippedMoves.contains(cleanString(m))))
                 .forEach(m -> invalidMsg.append("found move penalty without move: "
                         + m + System.lineSeparator()));
         stat_penalties.keySet().stream()
@@ -190,6 +190,13 @@ public class Playbook {
             return null;
         }
         return invalidMsg.toString();
+    }
+
+    protected String cleanString(String string) {
+        if (string.contains("(")) {
+            string = string.substring(0, string.indexOf("(") - 1);
+        }
+        return string.toLowerCase().replace(" ", "");
     }
 
 }

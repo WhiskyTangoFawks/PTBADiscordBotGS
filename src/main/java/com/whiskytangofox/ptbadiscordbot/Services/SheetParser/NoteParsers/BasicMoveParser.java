@@ -15,7 +15,7 @@ public class BasicMoveParser extends AbstractMoveParser implements INoteParser {
             if (!builder.skipLoad) {
                 service.registerBasicMove(move);
             } else {
-                service.registerSkippedMove(move.name);
+                service.registerSkippedMove(move.getReferenceMoveName());
             }
             return move.name;
         }

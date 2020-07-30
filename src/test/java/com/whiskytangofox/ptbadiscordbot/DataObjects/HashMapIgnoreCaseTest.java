@@ -4,6 +4,7 @@ import com.whiskytangofox.ptbadiscordbot.DataStructure.HashMapIgnoreCase;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class HashMapIgnoreCaseTest {
@@ -37,4 +38,10 @@ public class HashMapIgnoreCaseTest {
         assertTrue(map.containsKey("test key"));
         assertTrue(map.containsKey("Test Key"));
     }
+
+    @Test
+    public void testCleanKey() {
+        assertEquals("move", map.cleanKey("Move (Basic Move)"));
+    }
+
 }

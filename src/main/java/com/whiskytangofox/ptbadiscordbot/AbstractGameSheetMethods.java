@@ -3,6 +3,7 @@ package com.whiskytangofox.ptbadiscordbot;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
+import com.whiskytangofox.ptbadiscordbot.DataStructure.HashSetIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.Services.PlaybookService;
@@ -12,7 +13,6 @@ import com.whiskytangofox.ptbadiscordbot.Services.SheetParser.SheetParserService
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Objects;
 
 import static com.whiskytangofox.ptbadiscordbot.App.googleSheetAPI;
@@ -24,13 +24,13 @@ public abstract class AbstractGameSheetMethods {
     public PlaybookService playbooks;
     public final SheetParserService parser;
     public SheetAPIService sheet;
-    public HashSet<String> skippedMoves;
+    public HashSetIgnoreCase<String> skippedMoves;
 
     public AbstractGameSheetMethods(String sheetID) throws IOException {
         sheet = new SheetAPIService(sheetID, googleSheetAPI, settings);
         this.parser = new SheetParserService(this);
         this.playbooks = new PlaybookService(sheet);
-        this.skippedMoves = new HashSet<String>();
+        this.skippedMoves = new HashSetIgnoreCase<>();
     }
 
     public abstract void sendDebugMsg(String msg);

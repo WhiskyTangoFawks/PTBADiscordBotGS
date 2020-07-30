@@ -24,8 +24,8 @@ public abstract class AbstractMoveParser {
                 breakColumn = true;
             }
         }
-        //return null if no title has been set
-        return builder.get(0).isBlank() ? null : builder;
+
+        return builder;
     }
 
     protected String getRow(RangeWrapper sheet, int i, int j) {
