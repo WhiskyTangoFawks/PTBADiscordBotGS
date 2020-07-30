@@ -14,6 +14,7 @@ import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ public class Playbook {
     public PatriciaTrieIgnoreCase<Move> moves = new PatriciaTrieIgnoreCase<>();
     public PatriciaTrieIgnoreCase<CellReference> movePenalties = new PatriciaTrieIgnoreCase<>();
     public PatriciaTrieIgnoreCase<Move> basicMoves;
+    public HashSet<String> skippedMoves;
     public String tab;
     public SheetAPIService sheet;
 
@@ -45,11 +47,16 @@ public class Playbook {
         ArrayList<String> list = new ArrayList<>();
         list.add(statRef);
         list.add(penaltyRef);
-        List<String> response = sheet.getValues(tab, list);
-
+        List<String> response;
+        try {
+            response = sheet.getValues(tab, list);
+        } catch (NullPointerException e) {
+            throw new MissingValueException("Player: " + player + ", Stat:" + stat + ", returned Null, please correct your sheet");
+        }
         Integer intValue;
         try {
-            intValue = Integer.parseInt(response.get(0));
+            String value = response.get(0);
+            intValue = Integer.parseInt(value);
         } catch (NumberFormatException e) {
             throw new MissingValueException("Player: " + player + ", Stat:" + stat + ", returned Not A Number, please correct your sheet");
         }
@@ -170,7 +177,9 @@ public class Playbook {
         String starter = "Found sheet errors in " + title + System.lineSeparator();
         StringBuilder invalidMsg = new StringBuilder(starter);
         movePenalties.keySet().stream()
-                .filter(m -> !(moves.containsKey(m) || basicMoves.containsKey(m)))
+                .filter(m -> !(moves.containsKey(m)))
+                .filter(m -> !(basicMoves.containsKey(m)))
+                .filter(m -> !(skippedMoves.contains(m)))
                 .forEach(m -> invalidMsg.append("found move penalty without move: "
                         + m + System.lineSeparator()));
         stat_penalties.keySet().stream()

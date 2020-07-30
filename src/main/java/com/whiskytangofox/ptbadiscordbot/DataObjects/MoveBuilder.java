@@ -10,6 +10,7 @@ public class MoveBuilder {
     public String overrideName = null;
     public String overrideText = null;
     public boolean isList = false;
+    public boolean skipLoad = false;
 
     public MoveBuilder addLine() {
         builder.add("");

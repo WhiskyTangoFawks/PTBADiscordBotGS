@@ -12,6 +12,11 @@ public abstract class AbstractMoveParser {
         MoveBuilder builder = new MoveBuilder();
         builder = setBuilderOverridesFromNote(builder, note);
 
+        if ("false".equalsIgnoreCase(sheet.getValue(i, j))) {
+            builder.skipLoad = true;
+            sheet.setValue(i, i, "TRUE");
+        }
+
         boolean breakColumn = false;
         for (int k = 0; !breakColumn; k++) {
             builder.addLine(getRow(sheet, i, j + k));

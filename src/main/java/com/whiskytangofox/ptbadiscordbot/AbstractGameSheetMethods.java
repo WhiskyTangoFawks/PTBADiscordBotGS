@@ -12,6 +12,7 @@ import com.whiskytangofox.ptbadiscordbot.Services.SheetParser.SheetParserService
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 
 import static com.whiskytangofox.ptbadiscordbot.App.googleSheetAPI;
@@ -23,11 +24,13 @@ public abstract class AbstractGameSheetMethods {
     public PlaybookService playbooks;
     public final SheetParserService parser;
     public SheetAPIService sheet;
+    public HashSet<String> skippedMoves;
 
     public AbstractGameSheetMethods(String sheetID) throws IOException {
         sheet = new SheetAPIService(sheetID, googleSheetAPI, settings);
         this.parser = new SheetParserService(this);
         this.playbooks = new PlaybookService(sheet);
+        this.skippedMoves = new HashSet<String>();
     }
 
     public abstract void sendDebugMsg(String msg);
@@ -97,7 +100,7 @@ public abstract class AbstractGameSheetMethods {
                         if (basic != null) {
                             Move copy = basic.getModifiedCopy(advanced);
                             buffer.put(copy.name, copy);
-                        } else {
+                        } else if (!isMoveSkipped(basicName)) {
                             sendGameMsg("Unable to find: " + basicName + " while loading " + advanced.name);
                         }
                     } catch (Exception e) {
@@ -108,6 +111,14 @@ public abstract class AbstractGameSheetMethods {
             }
             book.moves.putAll(buffer);
         }
+    }
+
+    public void registerSkippedMove(String moveName) {
+        skippedMoves.add(moveName);
+    }
+
+    public boolean isMoveSkipped(String moveName) {
+        return skippedMoves.contains(moveName);
     }
 
 }

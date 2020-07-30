@@ -6,6 +6,7 @@ import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.MissingValueException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +48,7 @@ public class PlaybookTest {
         book = new Playbook(mockSheetService, null);
         book.player = testPlayer;
         book.basicMoves = new PatriciaTrieIgnoreCase<>();
+        book.skippedMoves = new HashSet<>();
     }
 
     @Test
@@ -75,6 +78,47 @@ public class PlaybookTest {
         StatResponse result = book.getStat("str");
         assertEquals(2, result.modStat);
         assertEquals("dis", result.debilityTag);
+    }
+
+    @Test
+    public void testGetStatException_NullPointer() throws IOException, DiscordBotException {
+        Playbook book = new Playbook(mockSheetService, null);
+
+        book.stats.put("str", new CellReference("A1"));
+        book.stat_penalties.put("str", new CellReference("A2"));
+        when(mockSettings.get(GameSettings.KEY.stat_debility_tag)).thenReturn("dis");
+
+        boolean thrown = false;
+        when(mockSheetService.getValues(any(), any())).thenThrow(new NullPointerException("test null pointer"));
+        try {
+            StatResponse result = book.getStat("str");
+        } catch (MissingValueException e) {
+            thrown = true;
+        }
+        assertTrue(thrown);
+    }
+
+    @Test
+    public void testGetStatException_NumberFormatException() throws IOException, DiscordBotException {
+        Playbook book = new Playbook(mockSheetService, null);
+
+        book.stats.put("str", new CellReference("A1"));
+        book.stat_penalties.put("str", new CellReference("A2"));
+        when(mockSettings.get(GameSettings.KEY.stat_debility_tag)).thenReturn("dis");
+
+        //Mocks
+        ArrayList<String> mockValues = new ArrayList<>();
+        mockValues.add("NotANumber");
+        mockValues.add("FALSE");
+        when(mockSheetService.getValues(any(), any())).thenReturn(mockValues);
+
+        boolean thrown = false;
+        try {
+            StatResponse result = book.getStat("str");
+        } catch (MissingValueException e) {
+            thrown = true;
+        }
+        assertTrue(thrown);
     }
 
     @Test
@@ -321,6 +365,19 @@ public class PlaybookTest {
         assertFalse(validationString.contains("stat0"));
         assertTrue(validationString.contains("move"));
         assertTrue(validationString.contains("stat"));
+    }
+
+    @Test
+    public void testValidatePlaybook_SkippedMove() {
+        book.movePenalties.put("move", null);
+        book.movePenalties.put("moveskipped", null);
+
+        book.skippedMoves.add("moveskipped");
+
+        String validationString = book.getValidationMsg();
+        logger.info(validationString);
+        assertFalse(validationString.contains("moveskipped"));
+        assertTrue(validationString.contains("move"));
     }
 
 }

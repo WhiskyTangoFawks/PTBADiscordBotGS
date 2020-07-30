@@ -12,7 +12,11 @@ public class BasicMoveParser extends AbstractMoveParser implements INoteParser {
         MoveBuilder builder = parseMove(sheet, i, j);
         if (builder != null) {
             Move move = builder.getMove();
-            service.registerBasicMove(move);
+            if (!builder.skipLoad) {
+                service.registerBasicMove(move);
+            } else {
+                service.registerSkippedMove(move.name);
+            }
             return move.name;
         }
         return null;

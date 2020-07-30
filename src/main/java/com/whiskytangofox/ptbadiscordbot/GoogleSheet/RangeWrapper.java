@@ -72,21 +72,29 @@ public class RangeWrapper {
                 //App.logger.warn("Tried to access value outside range");
             }
             return values.get(new CellReference(sheetColumn, sheetRow));
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             return null;
-        } catch (NullPointerException e){
+        } catch (NullPointerException e) {
             return null;
         }
     }
 
-    public String getNote(int sheetColumn, int sheetRow){
+    public void setValue(int sheetColumn, int sheetRow, String value) {
+        if (sheetColumn < firstCell.getColumnInt() || sheetColumn > lastCell.getColumnInt() ||
+                sheetRow < firstCell.getRow() || sheetRow > lastCell.getRow()) {
+            //App.logger.warn("Tried to access value outside range");
+        }
+        values.put(new CellReference(sheetColumn, sheetRow), value);
+    }
+
+    public String getNote(int sheetColumn, int sheetRow) {
         try {
             if (sheetColumn < firstCell.getColumnInt() || sheetColumn > lastCell.getColumnInt() ||
-                    sheetRow < firstCell.getRow() || sheetRow > lastCell.getRow()){
+                    sheetRow < firstCell.getRow() || sheetRow > lastCell.getRow()) {
                 App.logger.warn("Tried to access value outside range");
             }
             return notes.get(new CellReference(sheetColumn, sheetRow));
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             return null;
         } catch (NullPointerException e){
             return null;

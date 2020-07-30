@@ -75,6 +75,7 @@ public class SheetParserService {
         if (book != null && book.isValid()) {
             game.sendGameMsg(book.player, "registered playbook *" + book.title + "*");
             book.basicMoves = game.basicMoves;
+            book.skippedMoves = game.skippedMoves;
             game.playbooks.playbooks.put(book.player, book);
         }
     }
@@ -83,5 +84,8 @@ public class SheetParserService {
         game.basicMoves.put(move.name, move);
     }
 
+    public void registerSkippedMove(String moveName) {
+        game.registerSkippedMove(moveName);
+    }
 
 }
