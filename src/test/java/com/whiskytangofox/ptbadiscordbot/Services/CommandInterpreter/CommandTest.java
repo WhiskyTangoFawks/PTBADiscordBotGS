@@ -76,4 +76,17 @@ public class CommandTest {
         assertEquals(10, command.dice.get(0).size);
         assertFalse(command.failMsg);
     }
+
+    @Test
+    public void testHasStatFalse() {
+        command.addModifier("test1", Command.TYPE.INTEGER, "-1");
+        assertFalse(command.hasStat());
+    }
+
+    @Test
+    public void testHasStatTrue() {
+        command.addModifier("test1", Command.TYPE.STAT, "-1");
+        command.addModifier("test2", Command.TYPE.INTEGER, "-1");
+        assertTrue(command.hasStat());
+    }
 }

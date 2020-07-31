@@ -2,6 +2,7 @@ package com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Tokens;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
+import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,7 +38,10 @@ public class StatTokenTest extends ITokenTest {
         StatResponse response = new StatResponse("stat", 2, false);
         when(mockBook.getStat("stat")).thenReturn(response);
         underTest.execute(mockBook, command, "stat");
-        assertEquals(response, command.stat);
+        assertEquals(1, command.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.STAT)
+                .filter(m -> m.mod == 2)
+                .count());
         assertEquals(0, command.rawToParse.size());
     }
 
@@ -47,7 +51,10 @@ public class StatTokenTest extends ITokenTest {
         response.debilityTag = "dis";
         when(mockBook.getStat("stat")).thenReturn(response);
         underTest.execute(mockBook, command, "stat");
-        assertEquals(response, command.stat);
+        assertEquals(1, command.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.STAT)
+                .filter(m -> m.mod == 2)
+                .count());
         assertEquals(1, command.rawToParse.size());
         assertEquals("dis", command.rawToParse.peek());
     }

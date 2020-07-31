@@ -10,6 +10,7 @@ import com.whiskytangofox.ptbadiscordbot.Exceptions.MissingValueException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -119,6 +120,20 @@ public class PlaybookTest {
             thrown = true;
         }
         assertTrue(thrown);
+    }
+
+    @Test
+    public void testHasMoveStat() throws KeyConflictException {
+        book.moves.put("move", new Move("Move", "roll +stat"));
+        book.stats.put("stat", new CellReference("A1"));
+        assertTrue(book.hasMoveStat("Move"));
+    }
+
+    @Test
+    public void testHasMoveStat_False() throws KeyConflictException {
+        book.moves.put("move", new Move("Move", "roll +NotAStat"));
+        book.stats.put("stat", new CellReference("A1"));
+        assertFalse(book.hasMoveStat("Move"));
     }
 
     @Test
@@ -337,6 +352,7 @@ public class PlaybookTest {
     }
 
     @Test
+    @Ignore
     public void testGetMovePenalty_secondaryMove() throws IOException, KeyConflictException {
         //TODO - implement this or commit to NOT doing it
         book.movePenalties.put("move", new CellReference("A1"));
@@ -379,5 +395,6 @@ public class PlaybookTest {
         assertFalse(validationString.contains("moveskipped"));
         assertTrue(validationString.contains("move"));
     }
+
 
 }

@@ -123,8 +123,8 @@ public class Playbook {
         return new SetResourceResponse(resource, oldValue, mod, newValue);
     }
 
-    public int getMovePenalty(String move) throws IOException, KeyConflictException {
-        //String moveName = getMove(move).name;
+    //TODO - this is parsing to int when I want to do that later
+    public int getMovePenalty(String move) throws IOException {
         if (movePenalties.containsKey(move)) {
             return Integer.parseInt(sheet.getCellValue(tab, movePenalties.get(move).getCellRef()));
         }
@@ -161,6 +161,11 @@ public class Playbook {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public boolean hasMoveStat(String moveName) throws KeyConflictException {
+        Move move = getMove(moveName);
+        return move.getMoveStat(stats.keySet()) != null;
     }
 
     public StatResponse getMoveStat(String name) throws KeyConflictException, IOException, DiscordBotException {

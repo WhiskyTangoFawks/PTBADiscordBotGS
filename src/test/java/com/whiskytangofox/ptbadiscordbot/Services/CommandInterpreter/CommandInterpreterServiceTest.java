@@ -97,13 +97,17 @@ public class CommandInterpreterServiceTest {
 
     @Test
     public void testFinalizeCommandString_GetMoveStat() throws KeyConflictException, DiscordBotException, IOException {
-        //TODO
+        when(mockBook.hasMoveStat("move")).thenReturn(true);
         when(mockBook.getMoveStat("move")).thenReturn(stat);
-        Command command = new Command(mockBook, "testString");
+        Command command = new Command(mockBook, "");
+
         command.doRoll = true;
         command.move = new Move("move", "roll +stat");
         underTest.finalizeCommand(mockBook, command);
-        assertEquals(stat, command.stat);
+        assertEquals(1, command.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.STAT)
+                .filter(m -> m.mod == stat.modStat)
+                .count());
     }
 
     @Test
@@ -122,8 +126,14 @@ public class CommandInterpreterServiceTest {
         Command result = underTest.interpretCommandString(mockBook, "roll move stat -1 dis");
         assertTrue(result.doRoll);
         assertEquals(move, result.move);
-        assertEquals(stat, result.stat);
-        assertEquals(-1, result.mod);
+        assertEquals(1, result.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.STAT)
+                .filter(m -> m.mod == stat.modStat)
+                .count());
+        assertEquals(1, result.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.INTEGER)
+                .filter(m -> m.mod == -1)
+                .count());
         assertTrue(result.dice.get(0).dis);
     }
 
@@ -140,7 +150,10 @@ public class CommandInterpreterServiceTest {
         Command result = underTest.interpretCommandString(mockBook, "resource +2");
         assertFalse(result.doRoll);
         assertEquals("resource", result.resource);
-        assertEquals(2, result.mod);
+        assertEquals(1, result.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.INTEGER)
+                .filter(m -> m.mod == 2)
+                .count());
         assertEquals(0, result.dice.size());
     }
 

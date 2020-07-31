@@ -72,7 +72,7 @@ public class AbstractMoveParserTest extends INoteParserTest {
         values.put(new CellReference("A2"), "move text");
         notes.put(new CellReference("A1"), "playbook_move=Move Name");
 
-        assertNull(parser.parseMove(sheet, 1, 1));
+        assertTrue(parser.parseMove(sheet, 1, 1).skipLoad);
     }
 
     @Test

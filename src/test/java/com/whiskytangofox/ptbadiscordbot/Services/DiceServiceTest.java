@@ -2,7 +2,6 @@ package com.whiskytangofox.ptbadiscordbot.Services;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +10,9 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
+
+import static org.junit.Assert.*;
 
 public class DiceServiceTest {
 
@@ -56,19 +57,53 @@ public class DiceServiceTest {
 
     @Test
     public void roll_statPos() {
-        command.stat = new StatResponse("stat", 2, false);
+        command.addModifier("stat", Command.TYPE.STAT, "2");
         String result = underTest.roll(command);
         logger.info(result);
         assertTrue(result.contains("2d6"));
-        assertTrue(result.contains("+2"));
+        assertTrue(result.contains("2"));
     }
 
     @Test
     public void roll_statNeg() {
-        command.stat = new StatResponse("stat", -2, false);
+        command.addModifier("stat", Command.TYPE.STAT, "-2");
         String result = underTest.roll(command);
         logger.info(result);
         assertTrue(result.contains("2d6"));
         assertTrue(result.contains("-2"));
+    }
+
+    @Test
+    public void testDoRollingAndGetRollString() {
+        ArrayList<Integer> resultList = new ArrayList<>();
+        Dice dice = new Dice(3, 4);
+        String result = underTest.doRollingAndGetRollString(dice, resultList);
+        logger.info(result);
+        assertEquals(3, resultList.size());
+
+    }
+
+    @Test
+    public void testGetDescriptor() {
+        command.addModifier("stat", Command.TYPE.STAT, "+2");
+        command.addModifier("-1", Command.TYPE.INTEGER, "-1");
+        String result = underTest.getDescriptor(command);
+        logger.info(result);
+        assertTrue(result.contains("2d6"));
+        assertTrue(result.contains("(stat)"));
+        assertFalse(result.contains("+2"));
+        assertTrue(result.contains("-1"));
+    }
+
+    @Test
+    public void testGetModifiersValues() {
+        command.addModifier("stat", Command.TYPE.STAT, "+2");
+        command.addModifier("", Command.TYPE.INTEGER, "-1");
+        String result = underTest.getModifiersValues(command);
+        logger.info(result);
+        assertFalse(result.contains("2d6"));
+        assertFalse(result.contains("(stat)"));
+        assertTrue(result.contains("2"));
+        assertTrue(result.contains("-1"));
     }
 }

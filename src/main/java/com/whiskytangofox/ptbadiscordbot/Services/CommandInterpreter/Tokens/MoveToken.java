@@ -17,7 +17,6 @@ public class MoveToken implements IToken {
     public void execute(Playbook book, Command command, String string) throws IOException {
         try {
             command.move = book.getMove(string);
-            command.mod = command.mod + book.getMovePenalty(command.move.getReferenceMoveName());
         } catch (KeyConflictException e) {
             //This checks isMove during matchesParameter, so it shouldnt ever be a problem
             e.printStackTrace();

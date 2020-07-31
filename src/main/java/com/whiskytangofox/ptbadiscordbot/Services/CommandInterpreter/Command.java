@@ -3,7 +3,6 @@ package com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 
 import java.util.ArrayList;
@@ -20,13 +19,11 @@ public class Command {
         rawToParse.add(raw);
     }
 
-    public Queue<String> rawToParse = new LinkedList<String>();
+    public Queue<String> rawToParse = new LinkedList<>();
+    public LinkedList<Modifier> modifiers = new LinkedList<>();
 
     public Move move = null;
-    public StatResponse stat = null;
     public String resource = null;
-
-    public int mod = 0;
 
     public ArrayList<Dice> dice = new ArrayList<>();
 
@@ -51,6 +48,30 @@ public class Command {
             num = Integer.parseInt(rollParameters[0]);
             size = Integer.parseInt(rollParameters[1]);
             dice.add(new Dice(num, size));
+        }
+    }
+
+    public void addModifier(String name, TYPE type, String mod) {
+        modifiers.add(new Modifier(name, type, mod));
+    }
+
+    public boolean hasStat() {
+        return 0 < modifiers.stream().filter(m -> m.type == TYPE.STAT).count();
+    }
+
+    public enum TYPE {INTEGER, STAT, PENALTY}
+
+    public class Modifier {
+        public TYPE type;
+        public String name;
+        public String sign;
+        public int mod;
+
+        public Modifier(String name, TYPE type, String mod) {
+            this.type = type;
+            this.name = name;
+            this.mod = Integer.parseInt(mod);
+            sign = this.mod > -1 ? "+" : "";
         }
     }
 }

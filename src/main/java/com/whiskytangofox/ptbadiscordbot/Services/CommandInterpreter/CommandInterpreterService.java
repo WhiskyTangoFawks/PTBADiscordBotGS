@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Tokens.*;
@@ -18,30 +19,39 @@ public class CommandInterpreterService {
 
     public Command interpretCommandString(Playbook book, String raw) throws IOException, DiscordBotException, KeyConflictException {
         Command command = new Command(book, raw);
+        parseQueue(command, book);
+        finalizeCommand(book, command);
+        return command;
+    }
+
+    protected void parseQueue(Command command, Playbook book) throws IOException, DiscordBotException {
         while (!command.rawToParse.isEmpty()) {
             List<RawToken> tokenized = tokenizeStringCommand(book, command.rawToParse.poll());
             for (RawToken t : tokenized) {
                 t.token.execute(book, command, t.string);
             }
         }
-        finalizeCommand(book, command);
-        return command;
     }
 
     protected void finalizeCommand(Playbook book, Command command) throws KeyConflictException, DiscordBotException, IOException {
         if (command.doRoll && command.dice.size() == 0) {
             command.setDefaultDice();
         }
-        if (command.move != null && command.stat == null) {
-            command.stat = book.getMoveStat(command.move.name);
+        if (command.move != null && book.hasMoveStat(command.move.name) && !command.hasStat()) {
+            StatResponse stat = book.getMoveStat(command.move.name);
+            if (stat != null) {
+                new StatToken().execute(book, command, stat.stat);
+                parseQueue(command, book);
+            }
         }
-
     }
 
 
     protected List<RawToken> tokenizeStringCommand(Playbook book, String string) {
-        string = string.replaceAll("\\+", " +");
+        string = string.replaceAll("\\+", " +"); //make sure all have space before
+        string = string.replaceAll("\\+ ", "+"); //remove any space after
         string = string.replaceAll("-", " -");
+        string = string.replaceAll("- ", "-");
         String[] split = string.split(" ");
 
         List<RawToken> list = IntStream.range(0, split.length)
@@ -50,7 +60,7 @@ public class CommandInterpreterService {
                 .mapToObj(i -> mapToken(book, split[i], i))
                 .collect(toList());
 
-        //TODO - clean up the list - deal with potential for move names with spaces
+        //TODO - deal with potential for move names with spaces
 
         return list;
     }

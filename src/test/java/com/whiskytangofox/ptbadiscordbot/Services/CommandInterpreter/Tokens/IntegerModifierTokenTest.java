@@ -1,5 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Tokens;
 
+import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -25,7 +26,11 @@ public class IntegerModifierTokenTest extends ITokenTest {
     @Test
     public void testExecuteDiceAlreadySet() {
         underTest.execute(mockBook, command, "+4");
-        assertEquals(4, command.mod);
+        assertEquals(1, command.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.INTEGER)
+                .filter(m -> m.mod == 4)
+                .filter(m -> m.name.equals("+4"))
+                .count());
     }
 
 }

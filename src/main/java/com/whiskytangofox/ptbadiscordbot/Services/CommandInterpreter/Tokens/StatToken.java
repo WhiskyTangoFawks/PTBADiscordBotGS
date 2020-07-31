@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Tokens;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
 
@@ -18,16 +19,18 @@ public class StatToken implements IToken {
 
     @Override
     public void execute(Playbook book, Command command, String string) throws IOException, DiscordBotException {
-        if (string.startsWith("+")) {
-            command.stat = book.getStat(string.substring(1));
-        } else if (string.startsWith("-")) {
-            command.stat = book.getStat(string.substring(1));
-            command.stat.modStat *= -1;
-        } else {
-            command.stat = book.getStat(string);
+        StatResponse stat;
+        String sign = "";
+        if (string.startsWith("+") || string.startsWith("-")) {
+            if (string.startsWith("-")) {
+                sign = "-";
+            }
+            string = string.substring(1);
         }
-        if (command.stat.isDebilitated) {
-            command.rawToParse.add(command.stat.debilityTag);
+        stat = book.getStat(string);
+        command.addModifier(string, Command.TYPE.STAT, sign + stat.modStat);
+        if (stat.isDebilitated) {
+            command.rawToParse.add(stat.debilityTag);
         }
     }
 }

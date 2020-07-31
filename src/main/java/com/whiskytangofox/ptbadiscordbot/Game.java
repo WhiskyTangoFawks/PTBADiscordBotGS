@@ -59,7 +59,8 @@ public class Game extends AbstractGameSheetMethods {
                             + " "
                             + rollerService.roll(command);
                 } else if (command.resource != null) {
-                    response = response + book.modifyResource(command.resource, command.mod).getDescriptiveResult();
+                    int sum = command.modifiers.stream().mapToInt(m -> m.mod).sum();
+                    response = response + book.modifyResource(command.resource, sum).getDescriptiveResult();
                 }
                 sendGameMsg(response);
                 return (response);

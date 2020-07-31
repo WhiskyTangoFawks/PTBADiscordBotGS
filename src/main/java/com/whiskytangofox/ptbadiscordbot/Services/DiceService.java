@@ -1,9 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.Services;
 
-import com.whiskytangofox.ptbadiscordbot.App;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,57 +9,48 @@ import java.util.Random;
 
 public class DiceService {
 
-    static final Logger logger = LoggerFactory.getLogger(App.class);
     private static final Random random = new Random();
 
     public String roll(Command command) {
-        String msg = "*Rolled*";
-        ArrayList<Integer> rolls = new ArrayList<Integer>();
+        StringBuilder msg = new StringBuilder("*Rolled*");
+        ArrayList<Integer> rolls = new ArrayList<>();
 
-        for (com.whiskytangofox.ptbadiscordbot.DataObjects.Dice wrapper : command.dice) {
-            if (wrapper.adv || wrapper.dis) {
-                wrapper.num++;
-            }
-        }
-        msg = msg + " " + getNotation(command) + " :: ";
-        for (com.whiskytangofox.ptbadiscordbot.DataObjects.Dice wrapper : command.dice) {
+        command.dice.stream()
+                .filter(d -> d.adv || d.dis)
+                .forEach(d -> d.num++);
 
-            for (int i = 0; i < wrapper.num; i++) {
-                rolls.add(random.nextInt(wrapper.size) + 1);
-                String emoji = "[" + rolls.get(rolls.size() - 1) + "]";
-                msg = msg + emoji + ", ";
-            }
-            if (wrapper.adv || wrapper.dis) {
-                msg = dropLowAndStrikeThru(rolls, msg, wrapper.adv, wrapper.dis);
-            }
-        }
-        msg = msg.substring(0, msg.length() - 2); //cut the last ", "
+        msg.append(" ").append(getDescriptor(command)).append(" :: ");
 
-        int sum = getSum(rolls) + command.mod + (command.stat != null ? command.stat.modStat : 0);
+        command.dice.forEach(dice ->
+                msg.append(doRollingAndGetRollString(dice, rolls)));
 
-        String modSign = (command.stat != null ? command.stat.modStat : 0) < 1 ? "" : "+";
+        msg.append(getModifiersValues(command));
 
-        if (command.stat != null) {
-            msg = msg + "  +(" + modSign + (command.stat != null ? command.stat.modStat : 0) + ")";
-        }
+        int rollSum = rolls.stream().mapToInt(Integer::intValue).sum();
+        int modifierSum = command.modifiers.stream().mapToInt(m -> m.mod).sum();
+        int sum = rollSum + modifierSum;
 
-        modSign = command.mod < 1 ? "" : "+";
-        if (command.mod != 0) {
-            msg = msg + " " + modSign + command.mod;
-        }
-        msg = msg + "  =  " + sum;
+        msg.append("  =  ").append(sum);
         if (command.failMsg && sum < 7) {
-            msg = msg + System.lineSeparator() + "*Don't forget to mark EXP on a 6-*";
+            msg.append(System.lineSeparator()).append("*Don't forget to mark EXP on a 6-*");
         }
-        return msg;
+        return msg.toString();
     }
 
-    private int getSum(ArrayList<Integer> nums) {
-        int sum = 0;
-        for (Integer num : nums) {
-            sum = sum + num;
+    public String doRollingAndGetRollString(Dice dice, ArrayList<Integer> rolls) {
+        StringBuilder rollString = new StringBuilder();
+        for (int i = 0; i < dice.num; i++) {
+            rolls.add(random.nextInt(dice.size) + 1);
+            rollString.append("[").append(rolls.get(rolls.size() - 1)).append("]");
+            if (i < dice.num - 1) {
+                rollString.append(", ");
+            }
         }
-        return sum;
+        if (dice.adv || dice.dis) {
+            return dropLowAndStrikeThru(rolls, rollString.toString(), dice.adv, dice.dis);
+        } else {
+            return rollString.toString();
+        }
     }
 
     private String dropLowAndStrikeThru(ArrayList<Integer> rolls, String msg, boolean adv, boolean dis) {
@@ -92,21 +81,24 @@ public class DiceService {
         }
     }
 
-    private String getNotation(Command command) {
-        String msg = "*{";
-        for (com.whiskytangofox.ptbadiscordbot.DataObjects.Dice die : command.dice) {
-            String spaceOrNot = msg == "*{" ? "" : ", ";
-            msg = msg + spaceOrNot + die.getNotation();
+    public String getDescriptor(Command command) {
+        StringBuilder msg = new StringBuilder("*{");
+        for (int i = 0; i < command.dice.size(); i++) {
+            if (i > 0 && i < command.dice.size() - 1) {
+                msg.append(", ");
+            }
+            msg.append(command.dice.get(i).getNotation());
         }
-        if (command.stat != null) {
-            msg = msg + " +(" + command.stat.stat + ")";
-        }
-        if (command.mod != 0) {
-            String modSign = command.mod < 1 ? "" : "+";
-            msg = msg + " " + modSign + command.mod;
-        }
-        msg = msg + "}* ";
-        return msg;
+        command.modifiers.forEach(m -> msg.append(" ").append(m.sign).append("(").append(m.name).append(")"));
+
+        msg.append("}* ");
+        return msg.toString();
+    }
+
+    public String getModifiersValues(Command command) {
+        StringBuilder values = new StringBuilder();
+        command.modifiers.forEach(m -> values.append(" ").append(m.sign).append("(").append(m.mod).append(")"));
+        return values.toString();
     }
 
 }

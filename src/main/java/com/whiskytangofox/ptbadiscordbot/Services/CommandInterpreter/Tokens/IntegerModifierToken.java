@@ -16,6 +16,6 @@ public class IntegerModifierToken implements IToken {
 
     @Override
     public void execute(Playbook book, Command command, String string) {
-        command.mod = command.mod + Integer.parseInt(string);
+        command.addModifier(string, Command.TYPE.INTEGER, string);
     }
 }
