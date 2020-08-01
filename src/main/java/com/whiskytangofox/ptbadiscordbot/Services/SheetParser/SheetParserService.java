@@ -6,6 +6,7 @@ import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetParser.NoteParsers.*;
+import com.whiskytangofox.ptbadiscordbot.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ public class SheetParserService {
 
                 try {
                     if (sheet.getNote(i, j) != null && !sheet.getNote(i, j).isBlank()) {
-                        String note = sheet.getNote(i, j).toLowerCase().replace(" ", "");
+                        String note = Utils.cleanString(sheet.getNote(i, j));
                         PARSER parser = PARSER.valueOf(note.split(";")[0].split("=")[0]);
                         String result = parser.parse(this, sheet, playbook, note, i, j);
                         game.sendDebugMsg("Parsed note " + parser.name() + ":  " + result);

@@ -1,5 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
+import com.whiskytangofox.ptbadiscordbot.Utils;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,7 +26,7 @@ public class Move {
     }
 
     public String getReferenceMoveName() {
-        String result = this.name.toLowerCase().replace(" ", "");
+        String result = Utils.cleanString(this.name);
         if (result.contains("(")) {
             result = result.substring(0, result.indexOf("("));
         }
@@ -45,11 +47,11 @@ public class Move {
         return null;
     }
 
-    private List<String> getContainedInText(String text, String prefix, String... var){
-        final String preparedText = text.toLowerCase().replace(" ", "");
-        final String preparedPrefix = prefix.toLowerCase().replace(" ", "");
-        return Arrays.stream(var).map(v -> v.toLowerCase().replace(" ", ""))
-                .filter(v -> preparedText.contains(preparedPrefix+v))
+    private List<String> getContainedInText(String text, String prefix, String... var) {
+        final String preparedText = Utils.cleanString(text);
+        final String preparedPrefix = Utils.cleanString(prefix);
+        return Arrays.stream(var).map(v -> Utils.cleanString(v))
+                .filter(v -> preparedText.contains(preparedPrefix + v))
                 .collect(Collectors.toList());
     }
 
@@ -57,7 +59,6 @@ public class Move {
         HashSet<String> set = new HashSet<String>();
         if (name.contains("(")) {
             String list = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
-            //list = list.replace(" ", "").toLowerCase();
             return Arrays.stream(list.split(",")).collect(Collectors.toList());
         }
         return set;

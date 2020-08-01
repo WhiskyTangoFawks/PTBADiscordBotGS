@@ -2,16 +2,12 @@ package com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Tokens;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
+import com.whiskytangofox.ptbadiscordbot.Utils;
 
 public class IntegerModifierToken implements IToken {
     @Override
     public boolean matchesParameter(Playbook book, String string, int index) {
-        try {
-            Integer.parseInt(string);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return Utils.isInteger(string);
     }
 
     @Override

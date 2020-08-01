@@ -4,7 +4,6 @@ import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PatriciaTrieIgnoreCaseTest {
@@ -83,11 +82,6 @@ public class PatriciaTrieIgnoreCaseTest {
             thrown = true;
         }
         assertTrue(thrown);
-    }
-
-    @Test
-    public void testCleanKey() {
-        assertEquals("move", test.cleanKey("Move (Basic Move)"));
     }
 
 

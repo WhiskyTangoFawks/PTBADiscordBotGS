@@ -10,6 +10,7 @@ import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.MissingValueException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
+import com.whiskytangofox.ptbadiscordbot.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ public class Playbook {
         List<String> values = sheet.getValues(tab, refs);
         int oldValue = 0;
         int newValue = 0;
-        if (values.size() == 1 && isInteger(values.get(0))) {
+        if (values.size() == 1 && Utils.isInteger(values.get(0))) {
             oldValue = Integer.parseInt(values.get(0));
             newValue = oldValue + mod;
             if (res.max != null && newValue > res.max) {
@@ -154,14 +155,6 @@ public class Playbook {
         return sheet.settings.get(key);
     }
 
-    boolean isInteger(String string) {
-        try {
-            Integer.parseInt(string);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
     public boolean hasMoveStat(String moveName) throws KeyConflictException {
         Move move = getMove(moveName);
@@ -182,9 +175,9 @@ public class Playbook {
         String starter = "Found sheet errors in " + title + System.lineSeparator();
         StringBuilder invalidMsg = new StringBuilder(starter);
         movePenalties.keySet().stream()
-                .filter(m -> !(moves.containsKey(cleanString(m))))
-                .filter(m -> !(basicMoves.containsKey(cleanString(m))))
-                .filter(m -> !(skippedMoves.contains(cleanString(m))))
+                .filter(m -> !(moves.containsKey(Utils.cleanAndTruncateString(m))))
+                .filter(m -> !(basicMoves.containsKey(Utils.cleanAndTruncateString(m))))
+                .filter(m -> !(skippedMoves.contains(Utils.cleanAndTruncateString(m))))
                 .forEach(m -> invalidMsg.append("found move penalty without move: "
                         + m + System.lineSeparator()));
         stat_penalties.keySet().stream()
@@ -197,11 +190,5 @@ public class Playbook {
         return invalidMsg.toString();
     }
 
-    protected String cleanString(String string) {
-        if (string.contains("(")) {
-            string = string.substring(0, string.indexOf("(") - 1);
-        }
-        return string.toLowerCase().replace(" ", "");
-    }
 
 }

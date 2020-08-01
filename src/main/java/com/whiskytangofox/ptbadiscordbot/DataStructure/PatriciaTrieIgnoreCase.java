@@ -1,6 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.DataStructure;
 
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
+import com.whiskytangofox.ptbadiscordbot.Utils;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,26 +25,26 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
             }
         }
          */
-        return super.put(cleanKey(key), value);
+        return super.put(Utils.cleanAndTruncateString(key), value);
     }
 
     @Override
     public SortedMap prefixMap(String key) {
-        return super.prefixMap(cleanKey(key));
+        return super.prefixMap(Utils.cleanAndTruncateString(key));
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return super.containsKey(cleanKey((String) key));
+        return super.containsKey(Utils.cleanAndTruncateString((String) key));
     }
 
     @Override
     public E get(Object k) {
-        return super.get(cleanKey((String) k));
+        return super.get(Utils.cleanAndTruncateString((String) k));
     }
 
     public E getClosestMatch(String k) throws KeyConflictException {
-        k = cleanKey(k);
+        k = Utils.cleanAndTruncateString(k);
         if (this.containsKey(k)) {
             return this.get(k);
         } else if (this.prefixMap(k).size() == 1) {
@@ -58,10 +59,5 @@ public class PatriciaTrieIgnoreCase<E> extends PatriciaTrie<E> {
         }
     }
 
-    public String cleanKey(String key) {
-        if (key.contains("(")) {
-            key = key.substring(0, key.indexOf("(") - 1);
-        }
-        return key.toLowerCase().replace(" ", "");
-    }
+
 }

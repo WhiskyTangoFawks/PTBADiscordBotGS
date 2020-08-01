@@ -1,5 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.DataStructure;
 
+import com.whiskytangofox.ptbadiscordbot.Utils;
+
 import java.util.HashMap;
 
 public class HashMapIgnoreCase<V> extends HashMap<String, V> {
@@ -8,25 +10,18 @@ public class HashMapIgnoreCase<V> extends HashMap<String, V> {
         super();
     }
 
-    public String cleanKey(String key) {
-        if (key.contains("(")) {
-            key = key.substring(0, key.indexOf("(") - 1);
-        }
-        return key.toLowerCase().replace(" ", "");
-    }
-
     @Override
     public V get(Object key) {
-        return super.get(cleanKey(key.toString()));
+        return super.get(Utils.cleanAndTruncateString(key.toString()));
     }
 
     @Override
     public V put(String key, V value) {
-        return super.put(cleanKey(key), value);
+        return super.put(Utils.cleanAndTruncateString(key), value);
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return get(cleanKey(key.toString())) != null;
+        return get(Utils.cleanAndTruncateString(key.toString())) != null;
     }
 }
