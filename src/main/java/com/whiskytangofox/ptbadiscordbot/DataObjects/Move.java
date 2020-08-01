@@ -9,7 +9,8 @@ public class Move {
 
     public final String name;
     public String text;
-    public ArrayList<String> modifying = new ArrayList<String>();
+    public ArrayList<String> modifying = new ArrayList<>();
+    public Move parentMove;
 
     public Move(String moveName, String moveText) {
         name = moveName;
@@ -19,9 +20,10 @@ public class Move {
     public Move getModifiedCopy(Move secondaryMove) {
         Move copy = new Move(this.name, this.text);
 
-        copy.text = copy.text + System.lineSeparator()
+        copy.text = copy.text
                 + System.lineSeparator()
                 + secondaryMove.text;
+        copy.parentMove = secondaryMove;
         return copy;
     }
 
@@ -50,13 +52,13 @@ public class Move {
     private List<String> getContainedInText(String text, String prefix, String... var) {
         final String preparedText = Utils.cleanString(text);
         final String preparedPrefix = Utils.cleanString(prefix);
-        return Arrays.stream(var).map(v -> Utils.cleanString(v))
+        return Arrays.stream(var).map(Utils::cleanString)
                 .filter(v -> preparedText.contains(preparedPrefix + v))
                 .collect(Collectors.toList());
     }
 
-    public Collection<String> getParentMoves() {
-        HashSet<String> set = new HashSet<String>();
+    public Collection<String> getChildMoveNames() {
+        HashSet<String> set = new HashSet<>();
         if (name.contains("(")) {
             String list = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
             return Arrays.stream(list.split(",")).collect(Collectors.toList());

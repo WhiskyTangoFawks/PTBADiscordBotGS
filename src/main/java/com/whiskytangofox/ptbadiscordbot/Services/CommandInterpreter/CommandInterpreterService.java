@@ -37,6 +37,15 @@ public class CommandInterpreterService {
         if (command.doRoll && command.dice.size() == 0) {
             command.setDefaultDice();
         }
+        if (command.doRoll && command.move != null) {
+            int penalty = book.getMovePenalty(command.move.name);
+            if (penalty == 0 && command.move.parentMove != null) {
+                penalty = book.getMovePenalty(command.move.parentMove.name);
+            }
+            if (penalty != 0) {
+                command.addModifier("penalty", Command.TYPE.PENALTY, "" + penalty);
+            }
+        }
         if (command.move != null && book.hasMoveStat(command.move.name) && !command.hasStat()) {
             StatResponse stat = book.getMoveStat(command.move.name);
             if (stat != null) {

@@ -155,7 +155,6 @@ public class Playbook {
         return sheet.settings.get(key);
     }
 
-
     public boolean hasMoveStat(String moveName) throws KeyConflictException {
         Move move = getMove(moveName);
         return move.getMoveStat(stats.keySet()) != null;
@@ -178,12 +177,10 @@ public class Playbook {
                 .filter(m -> !(moves.containsKey(Utils.cleanAndTruncateString(m))))
                 .filter(m -> !(basicMoves.containsKey(Utils.cleanAndTruncateString(m))))
                 .filter(m -> !(skippedMoves.contains(Utils.cleanAndTruncateString(m))))
-                .forEach(m -> invalidMsg.append("found move penalty without move: "
-                        + m + System.lineSeparator()));
+                .forEach(m -> invalidMsg.append("found move penalty without move: ").append(m).append(System.lineSeparator()));
         stat_penalties.keySet().stream()
                 .filter(m -> !isStat(m))
-                .forEach(m -> invalidMsg.append("found stat penalty without move: "
-                        + m + System.lineSeparator()));
+                .forEach(m -> invalidMsg.append("found stat penalty without move: ").append(m).append(System.lineSeparator()));
         if (invalidMsg.toString().equalsIgnoreCase(starter)) {
             return null;
         }

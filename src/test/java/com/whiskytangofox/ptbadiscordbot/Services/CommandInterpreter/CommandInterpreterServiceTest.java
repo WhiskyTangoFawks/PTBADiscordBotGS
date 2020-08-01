@@ -51,7 +51,7 @@ public class CommandInterpreterServiceTest {
     }
 
     @Test
-    public void mapToken_RollIsRegisteredAsAMoveAndAStat() throws KeyConflictException {
+    public void mapToken_RollIsRegisteredAsAMoveAndAStat() {
         when(mockBook.isMove("roll")).thenReturn(true);
         when(mockBook.isStat("stat")).thenReturn(true);
         RawToken raw = underTest.mapToken(mockBook, "roll", 0);
@@ -79,7 +79,7 @@ public class CommandInterpreterServiceTest {
     }
 
     @Test
-    public void tokenizeStringCommand_testIndex() throws KeyConflictException {
+    public void tokenizeStringCommand_testIndex() {
         when(mockBook.isMove("roll")).thenReturn(true);
         List<RawToken> result = underTest.tokenizeStringCommand(mockBook, "roll roll");
         assertEquals(2, result.size());
@@ -107,6 +107,38 @@ public class CommandInterpreterServiceTest {
         assertEquals(1, command.modifiers.stream()
                 .filter(m -> m.type == Command.TYPE.STAT)
                 .filter(m -> m.mod == stat.modStat)
+                .count());
+    }
+
+    @Test
+    public void testFinalizeCommandString_MovePenalty() throws KeyConflictException, DiscordBotException, IOException {
+        when(mockBook.getMovePenalty("move")).thenReturn(-100);
+        Command command = new Command(mockBook, "");
+
+        command.doRoll = true;
+        command.move = new Move("move", "roll");
+        underTest.finalizeCommand(mockBook, command);
+        assertEquals(1, command.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.PENALTY)
+                .filter(m -> m.mod == -100)
+                .count());
+    }
+
+    @Test
+    public void testFinalizeCommandString_ParentMovePenalty() throws KeyConflictException, DiscordBotException, IOException {
+        when(mockBook.getMovePenalty("Basic Move")).thenReturn(-100);
+        Move childMove = new Move("Child Move (Basic Move)", "move text");
+        Move basicMove = new Move("Basic Move", "Move text");
+        childMove.parentMove = basicMove;
+
+        Command command = new Command(mockBook, "");
+
+        command.doRoll = true;
+        command.move = childMove;
+        underTest.finalizeCommand(mockBook, command);
+        assertEquals(1, command.modifiers.stream()
+                .filter(m -> m.type == Command.TYPE.PENALTY)
+                .filter(m -> m.mod == -100)
                 .count());
     }
 

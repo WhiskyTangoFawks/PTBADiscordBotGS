@@ -19,6 +19,9 @@ public class StatToken implements IToken {
 
     @Override
     public void execute(Playbook book, Command command, String string) throws IOException, DiscordBotException {
+        if (command.hasStat()) {
+            throw new IllegalArgumentException("Attempted to assign a stat twice");
+        }
         StatResponse stat;
         String sign = "";
         if (string.startsWith("+") || string.startsWith("-")) {

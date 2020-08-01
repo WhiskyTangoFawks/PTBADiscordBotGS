@@ -5,12 +5,11 @@ import org.junit.Test;
 
 import java.util.HashSet;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class MoveTest {
 
-    static HashSet<String> stats = new HashSet<String>();
+    static HashSet<String> stats = new HashSet<>();
 
     @BeforeClass
     public static void beforeClass() {
@@ -53,5 +52,13 @@ public class MoveTest {
         assertEquals("move", move.getReferenceMoveName());
     }
 
+    @Test
+    public void testGetModifiedCopy() {
+        Move basicMove = new Move("Move", "test text");
+        Move childMove = new Move("Secondary Move (Basic Move)", "More move text");
+        Move modifiedBasicMove = basicMove.getModifiedCopy(childMove);
+        assertNotEquals(basicMove, modifiedBasicMove);
+        assertEquals(modifiedBasicMove.parentMove, childMove);
+    }
 
 }

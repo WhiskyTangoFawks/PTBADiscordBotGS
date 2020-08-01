@@ -26,7 +26,7 @@ public abstract class AbstractGameSheetMethods {
     public SheetAPIService sheet;
     public HashSetIgnoreCase<String> skippedMoves;
 
-    public AbstractGameSheetMethods(String sheetID) throws IOException {
+    public AbstractGameSheetMethods(String sheetID) {
         sheet = new SheetAPIService(sheetID, googleSheetAPI, settings);
         this.parser = new SheetParserService(this);
         this.playbooks = new PlaybookService(sheet);
@@ -91,7 +91,7 @@ public abstract class AbstractGameSheetMethods {
         for (Playbook book : playbooks.playbooks.values()) {
             HashMap<String, Move> buffer = new HashMap<>();
             for (Move advanced : book.moves.values()) {
-                for (String basicName : advanced.getParentMoves()) {
+                for (String basicName : advanced.getChildMoveNames()) {
                     try {
                         Move basic = buffer.get(basicName);
                         if (basic == null) {

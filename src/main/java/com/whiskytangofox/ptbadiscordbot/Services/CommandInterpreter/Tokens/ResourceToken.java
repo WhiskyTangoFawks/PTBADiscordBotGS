@@ -12,6 +12,9 @@ public class ResourceToken implements IToken {
 
     @Override
     public void execute(Playbook book, Command command, String string) {
+        if (command.resource != null) {
+            throw new IllegalArgumentException("Attempted to assign a resource when one is already assigned");
+        }
         command.resource = string;
     }
 }
