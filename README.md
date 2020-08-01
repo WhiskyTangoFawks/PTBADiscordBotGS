@@ -37,7 +37,7 @@ add debug to the end of the URL to launch the sheet reader in debug mode. This m
 | +Stat               | adds the associated value (and debility, if present) from the sheet                                                    |
 | MoveName            | Prints the move text out as part of the roll. If a single "Roll +Stat occurs in the move text, will also add that stat |
 | adv                 | advantage, rolls an extra die drops the lowest                                                                         |
-| adv                 | disadvantage, rolls an extra die and drops the highest                                                                 |
+| dis                 | disadvantage, rolls an extra die and drops the highest                                                                 |
 
 ###Example Commands
 
