@@ -89,7 +89,7 @@ public class DiceService {
             }
             msg.append(command.dice.get(i).getNotation());
         }
-        command.modifiers.forEach(m -> msg.append(" ").append(m.sign).append("(").append(m.name).append(")"));
+        command.modifiers.forEach(m -> msg.append(" ").append(m.commandSign).append("(").append(m.name).append(")"));
 
         msg.append("}* ");
         return msg.toString();
@@ -97,7 +97,7 @@ public class DiceService {
 
     public String getModifiersValues(Command command) {
         StringBuilder values = new StringBuilder();
-        command.modifiers.forEach(m -> values.append(" ").append(m.sign).append("(").append(m.mod).append(")"));
+        command.modifiers.forEach(m -> values.append(" ").append(m.commandSign).append("(").append(m.mod).append(")"));
         return values.toString();
     }
 

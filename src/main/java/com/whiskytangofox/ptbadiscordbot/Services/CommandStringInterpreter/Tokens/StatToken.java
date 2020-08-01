@@ -27,6 +27,8 @@ public class StatToken implements IToken {
         if (string.startsWith("+") || string.startsWith("-")) {
             if (string.startsWith("-")) {
                 sign = "-";
+            } else {
+                sign = "+";
             }
             string = string.substring(1);
         }

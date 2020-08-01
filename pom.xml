@@ -61,12 +61,6 @@
             <artifactId>google-api-services-sheets</artifactId>
             <version>v4-rev581-1.25.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.inject/javax.inject -->
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>1</version>
-        </dependency>
 
     </dependencies>
 
@@ -84,7 +78,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <slf4jVersion>1.6.1</slf4jVersion>
-        <jdk.version>1.8</jdk.version>
+        <jdkVersion>14</jdkVersion>
+        <java.version>14</java.version>
     </properties>
 
     <build>

@@ -78,9 +78,10 @@
   </dependencies>
   <properties>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <java.version>14</java.version>
     <maven.compiler.source>1.8</maven.compiler.source>
+      <jdkVersion>14</jdkVersion>
     <slf4jVersion>1.6.1</slf4jVersion>
-    <jdk.version>1.8</jdk.version>
   </properties>
 </project>
 

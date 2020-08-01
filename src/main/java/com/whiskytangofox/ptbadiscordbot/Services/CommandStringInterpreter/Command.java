@@ -64,14 +64,31 @@ public class Command {
     public static class Modifier {
         public TYPE type;
         public String name;
-        public String sign;
+        public Character commandSign;
         public int mod;
 
         public Modifier(String name, TYPE type, String mod) {
             this.type = type;
             this.name = name;
+            if (mod.startsWith("++")) {
+                commandSign = '+';
+                mod = mod.substring(2);
+            }
+            if (mod.startsWith("--")) {
+                commandSign = '-';
+                mod = mod.substring(1);
+            } else if (mod.startsWith("+-")) {
+                commandSign = '+';
+                mod = mod.substring(1);
+            } else if (mod.startsWith("-+")) {
+                commandSign = '-';
+                mod = "-" + mod.substring(2);
+            }
             this.mod = Integer.parseInt(mod);
-            sign = this.mod > -1 ? "+" : "";
+            if (commandSign == null) {
+                commandSign = '+';
+            }
+
         }
     }
 }

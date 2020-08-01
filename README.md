@@ -2,8 +2,13 @@
 A customizable discord bot for Powered By The Apocalypse Games
 
 -Primary functions
-1) Dice roller
+1) Dice roller that automatically applies relevant bonuses and penalties
 2) Integrate moves, stats, and resources from a google sheet
+
+#Getting Help
+Join my Dev Channel on Discord for help setting up and using the bot 
+
+https://discord.gg/NqPrvJ
 
 #Adding the Bot to a Server
 https://discord.com/api/oauth2/authorize?client_id=655109520577527821&permissions=2048&scope=bot
@@ -105,7 +110,7 @@ Example: _resource=hp;min=0;max=20_
 
 Resources can also be designated as move penalties, which are applied automatically whenever the listed move is rolled
 
-Example _resource=spell;min=-10;max=0;move_penalty=Cast A Spell_
+Example _resource=sp;min=-10;max=0;move_penalty=Cast A Spell_
 
 ##Properties Tab
 1) Add a properties tab, with the required properties.

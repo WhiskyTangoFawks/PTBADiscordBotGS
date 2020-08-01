@@ -89,4 +89,52 @@ public class CommandTest {
         command.addModifier("test2", Command.TYPE.INTEGER, "-1");
         assertTrue(command.hasStat());
     }
+
+    Character neg = '-';
+    Character pos = '+';
+
+    @Test
+    public void testInstantiateModifier() {
+        Command.Modifier mod = new Command.Modifier("name", Command.TYPE.STAT, "-3");
+        assertEquals("name", mod.name);
+        assertEquals(Command.TYPE.STAT, mod.type);
+        assertEquals(pos, mod.commandSign);
+        assertEquals(-3, mod.mod);
+    }
+
+    @Test
+    public void testInstantiateModifier_DoubleNegative() {
+        Command.Modifier mod = new Command.Modifier("name", Command.TYPE.STAT, "--3");
+        assertEquals("name", mod.name);
+        assertEquals(Command.TYPE.STAT, mod.type);
+        assertEquals(neg, mod.commandSign);
+        assertEquals(-3, mod.mod);
+    }
+
+    @Test
+    public void testInstantiateModifier_DoublePositive() {
+        Command.Modifier mod = new Command.Modifier("name", Command.TYPE.STAT, "++3");
+        assertEquals("name", mod.name);
+        assertEquals(Command.TYPE.STAT, mod.type);
+        assertEquals(pos, mod.commandSign);
+        assertEquals(3, mod.mod);
+    }
+
+    @Test
+    public void testInstantiateModifier_NegPos() {
+        Command.Modifier mod = new Command.Modifier("name", Command.TYPE.STAT, "-+3");
+        assertEquals("name", mod.name);
+        assertEquals(Command.TYPE.STAT, mod.type);
+        assertEquals(neg, mod.commandSign);
+        assertEquals(-3, mod.mod);
+    }
+
+    @Test
+    public void testInstantiateModifier_PosNeg() {
+        Command.Modifier mod = new Command.Modifier("name", Command.TYPE.STAT, "+-3");
+        assertEquals("name", mod.name);
+        assertEquals(Command.TYPE.STAT, mod.type);
+        assertEquals(pos, mod.commandSign);
+        assertEquals(-3, mod.mod);
+    }
 }
