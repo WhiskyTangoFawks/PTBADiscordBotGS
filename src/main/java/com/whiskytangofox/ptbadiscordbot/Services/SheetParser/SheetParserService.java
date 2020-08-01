@@ -1,6 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot.Services.SheetParser;
 
-import com.whiskytangofox.ptbadiscordbot.AbstractGameSheetMethods;
+import com.whiskytangofox.ptbadiscordbot.AbstractGameGoogleSheetMethods;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 
 public class SheetParserService {
 
-    public AbstractGameSheetMethods game;
+    public AbstractGameGoogleSheetMethods game;
 
-    public SheetParserService(AbstractGameSheetMethods game) {
+    public SheetParserService(AbstractGameGoogleSheetMethods game) {
         this.game = game;
     }
 

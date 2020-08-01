@@ -1,10 +1,10 @@
 package com.whiskytangofox.ptbadiscordbot.Services;
 
+import com.whiskytangofox.ptbadiscordbot.DataObjects.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.ResourceResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
-import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.HashMapIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
@@ -47,11 +47,11 @@ public class PlaybookService {
         return getPlaybook(player).isResource(resource);
     }
 
-    public SetResourceResponse modifyResource(String player, String resource, int mod) throws PlayerNotFoundException, IOException {
+    public ResourceResponse modifyResource(String player, String resource, int mod) throws PlayerNotFoundException, IOException {
         return getPlaybook(player).modifyResource(resource, mod);
     }
 
-    public int getMovePenalty(String player, String move) throws PlayerNotFoundException, IOException, KeyConflictException {
+    public int getMovePenalty(String player, String move) throws PlayerNotFoundException, IOException {
         return getPlaybook(player).getMovePenalty(move);
     }
 

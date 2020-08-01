@@ -1,8 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.ResourceResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
-import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.HashMapIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
@@ -77,7 +76,7 @@ public class Playbook {
         return resources.containsKey(resource);
     }
 
-    public SetResourceResponse modifyResource(String resource, int mod) throws IOException {
+    public ResourceResponse modifyResource(String resource, int mod) throws IOException {
         Resource res = resources.get(resource);
         List<CellReference> cells = res.getList();
         List<String> refs = cells.stream().map(CellReference::getCellRef).collect(Collectors.toList());
@@ -121,7 +120,7 @@ public class Playbook {
             }
             newValue = (int) values.stream().filter(v -> v.equalsIgnoreCase("true")).count();
         }
-        return new SetResourceResponse(resource, oldValue, mod, newValue);
+        return new ResourceResponse(resource, oldValue, mod, newValue);
     }
 
     //TODO - this is parsing to int when I want to do that later

@@ -1,7 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.Services.SheetParser.NoteParsers;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.Game;
+import com.whiskytangofox.ptbadiscordbot.GameGoogle;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
@@ -24,7 +24,7 @@ public abstract class INoteParserTest {
     SheetAPIService gameSheetService;
 
     @Mock
-    Game mockGame;
+    GameGoogle mockGame;
 
     Playbook book;
 

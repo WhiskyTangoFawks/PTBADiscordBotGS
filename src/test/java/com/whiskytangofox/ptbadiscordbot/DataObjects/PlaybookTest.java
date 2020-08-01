@@ -1,8 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.SetResourceResponse;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.ResourceResponse;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
-import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
@@ -178,7 +177,7 @@ public class PlaybookTest {
         ArrayList<String> mockResult = new ArrayList<>();
         mockResult.add("10");
         when(mockSheetService.getValues(any(), any())).thenReturn(mockResult);
-        SetResourceResponse result = book.modifyResource("hp", 0);
+        ResourceResponse result = book.modifyResource("hp", 0);
         assertEquals(0, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(10, result.newValue);
@@ -193,7 +192,7 @@ public class PlaybookTest {
         ArrayList<String> sheetValues = new ArrayList<>();
         sheetValues.add("10");
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", 1);
+        ResourceResponse result = book.modifyResource("hp", 1);
         assertEquals(1, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(11, result.newValue);
@@ -211,7 +210,7 @@ public class PlaybookTest {
         ArrayList<String> sheetValues = new ArrayList<>();
         sheetValues.add("10");
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", 20);
+        ResourceResponse result = book.modifyResource("hp", 20);
         assertEquals(20, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(20, result.newValue);
@@ -229,7 +228,7 @@ public class PlaybookTest {
         ArrayList<String> sheetValues = new ArrayList<>();
         sheetValues.add("10");
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", -20);
+        ResourceResponse result = book.modifyResource("hp", -20);
         assertEquals(-20, result.mod);
         assertEquals(10, result.oldValue);
         assertEquals(0, result.newValue);
@@ -248,7 +247,7 @@ public class PlaybookTest {
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", 0);
+        ResourceResponse result = book.modifyResource("hp", 0);
         assertEquals(0, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(3, result.newValue);
@@ -269,7 +268,7 @@ public class PlaybookTest {
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", 2);
+        ResourceResponse result = book.modifyResource("hp", 2);
         assertEquals(2, result.mod);
         assertEquals(2, result.oldValue);
         assertEquals(4, result.newValue);
@@ -291,7 +290,7 @@ public class PlaybookTest {
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", -2);
+        ResourceResponse result = book.modifyResource("hp", -2);
         assertEquals(-2, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(1, result.newValue);
@@ -313,7 +312,7 @@ public class PlaybookTest {
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", -4);
+        ResourceResponse result = book.modifyResource("hp", -4);
         assertEquals(-4, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(0, result.newValue);
@@ -334,7 +333,7 @@ public class PlaybookTest {
         List<String> sheetValues = Arrays.asList(arrValues);
 
         when(mockSheetService.getValues(any(), any())).thenReturn(sheetValues);
-        SetResourceResponse result = book.modifyResource("hp", 10);
+        ResourceResponse result = book.modifyResource("hp", 10);
         assertEquals(10, result.mod);
         assertEquals(3, result.oldValue);
         assertEquals(5, result.newValue);
@@ -345,7 +344,7 @@ public class PlaybookTest {
     }
 
     @Test
-    public void testGetMovePenalty() throws IOException, KeyConflictException {
+    public void testGetMovePenalty() throws IOException {
         book.movePenalties.put("move", new CellReference("A1"));
         when(mockSheetService.getCellValue(any(), any())).thenReturn("-1");
         assertEquals(-1, book.getMovePenalty("move"));
@@ -353,7 +352,7 @@ public class PlaybookTest {
 
     @Test
     @Ignore
-    public void testGetMovePenalty_secondaryMove() throws IOException, KeyConflictException {
+    public void testGetMovePenalty_secondaryMove() throws IOException {
         //TODO - implement this or commit to NOT doing it
         book.movePenalties.put("move", new CellReference("A1"));
         when(mockSheetService.getCellValue(any(), any())).thenReturn("-1");

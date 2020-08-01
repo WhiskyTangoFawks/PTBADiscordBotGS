@@ -1,7 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.Services;
 
 import com.whiskytangofox.ptbadiscordbot.DataStructure.PatriciaTrieIgnoreCase;
-import com.whiskytangofox.ptbadiscordbot.Game;
+import com.whiskytangofox.ptbadiscordbot.GameGoogle;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetParser.SheetParserService;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 public class SheetParserServiceTest {
 
-    static Game game;
+    static GameGoogle game;
 
     @Mock
     static Logger mockLogger;
@@ -56,7 +56,7 @@ public class SheetParserServiceTest {
         MockitoAnnotations.initMocks(this);
         when(mockChannel.sendMessage(anyString())).thenReturn(mockMessageAction);
         SheetParserService.logger = mockLogger;
-        game = new Game(null, mockChannel, null, false);
+        game = new GameGoogle(null, mockChannel, null, false);
         game.basicMoves = new PatriciaTrieIgnoreCase<>();
         reader = new SheetParserService(game);
     }

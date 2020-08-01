@@ -1,12 +1,12 @@
 package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
-import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
-import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
-import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.CommandInterpreterService;
+import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Command;
+import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.CommandStringInterpreterService;
 import com.whiskytangofox.ptbadiscordbot.Services.DiceService;
 import com.whiskytangofox.ptbadiscordbot.Services.PlaybookService;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
@@ -30,7 +30,7 @@ public class GameSystemTests {
     public static final Logger logger = LoggerFactory.getLogger(GameSystemTests.class);
 
     @Mock
-    CommandInterpreterService mockInterpreter;
+    CommandStringInterpreterService mockInterpreter;
 
     @Mock
     DiceService mockDiceService;
@@ -56,11 +56,11 @@ public class GameSystemTests {
     @Mock
     User mockUser;
 
-    Game underTest;
+    GameGoogle underTest;
 
     @Before
     public void setupGame() throws Exception {
-        underTest = new Game(null, null, null, false);
+        underTest = new GameGoogle(null, null, null, false);
         MockitoAnnotations.initMocks(this);
 
         underTest.settings = mockSettings;

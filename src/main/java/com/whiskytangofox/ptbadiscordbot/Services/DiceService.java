@@ -1,7 +1,7 @@
 package com.whiskytangofox.ptbadiscordbot.Services;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
-import com.whiskytangofox.ptbadiscordbot.Services.CommandInterpreter.Command;
+import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Command;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 public class GameSheetTest {
 
-    Game game;
+    GameGoogle game;
     public static final Logger logger = LoggerFactory.getLogger(GameSheetTest.class);
 
     @Mock
@@ -37,7 +37,7 @@ public class GameSheetTest {
 
     @Before
     public void setupGame() throws Exception {
-        game = new Game(null, null, null, false);
+        game = new GameGoogle(null, null, null, false);
         MockitoAnnotations.initMocks(this);
         mockSheetService = new SheetAPIService(null, mockApi, game.settings);
         move = new Move("Basic Move", "basic move text roll +STR:");

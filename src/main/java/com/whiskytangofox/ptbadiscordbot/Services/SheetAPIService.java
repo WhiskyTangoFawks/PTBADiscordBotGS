@@ -1,6 +1,6 @@
 package com.whiskytangofox.ptbadiscordbot.Services;
 
-import com.whiskytangofox.ptbadiscordbot.DataStructure.GameSettings;
+import com.whiskytangofox.ptbadiscordbot.DataObjects.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 

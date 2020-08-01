@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public class App extends ListenerAdapter {
     public static final Logger logger = LoggerFactory.getLogger(App.class);
     public static GoogleSheetAPI googleSheetAPI;
     static JDA jda;
-    static HashMap<MessageChannel, Game> registeredGames = new HashMap<MessageChannel, Game>();
+    static HashMap<MessageChannel, GameGoogle> registeredGames = new HashMap<>();
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {
         googleSheetAPI = new GoogleSheetAPI();
@@ -40,7 +41,7 @@ public class App extends ListenerAdapter {
         }
     }
 
-    public void onReady(ReadyEvent Event) {
+    public void onReady(@NotNull ReadyEvent Event) {
         System.out.println("The Bot Is Ready");
     }
 
@@ -65,7 +66,7 @@ public class App extends ListenerAdapter {
         try {
             channel.sendMessage("Sheet Link Detected, attempting to register game").queue();
             String sheetID = getSheetID(msg);
-            Game game = new Game(guild, channel, sheetID, msg.contains("debug"));
+            GameGoogle game = new GameGoogle(guild, channel, sheetID, msg.contains("debug"));
             channel.sendMessage("Game registered.").queue();
             registeredGames.put(channel, game);
             return true;
@@ -86,8 +87,7 @@ public class App extends ListenerAdapter {
         try {
             int start = msg.indexOf("/d/")+3;
             int end = msg.lastIndexOf("/");
-            String sheetID = msg.substring(start, end);
-            return sheetID;
+            return msg.substring(start, end);
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to extract sheet ID");
         }
