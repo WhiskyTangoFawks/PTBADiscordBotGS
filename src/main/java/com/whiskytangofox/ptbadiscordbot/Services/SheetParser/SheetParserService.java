@@ -50,6 +50,9 @@ public class SheetParserService {
                 try {
                     if (sheet.getNote(i, j) != null && !sheet.getNote(i, j).isBlank()) {
                         String note = Utils.cleanString(sheet.getNote(i, j));
+                        if (note.contains("[") && note.contains("]")) {
+                            note = replaceCellReferences(sheet, note);
+                        }
                         PARSER parser = PARSER.valueOf(note.split(";")[0].split("=")[0]);
                         String result = parser.parse(this, sheet, playbook, note, i, j);
                         game.sendDebugMsg("Parsed note " + parser.name() + ":  " + result);
@@ -78,6 +81,18 @@ public class SheetParserService {
             book.basicMoves = game.basicMoves;
             book.skippedMoves = game.skippedMoves;
             game.playbooks.playbooks.put(book.player, book);
+        }
+    }
+
+    public String replaceCellReferences(RangeWrapper range, String note) {
+        String cellRef = null;
+        try {
+            cellRef = note.substring(note.indexOf("[") + 1, note.indexOf("]"));
+            new CellReference(cellRef);
+            String value = range.getValue(cellRef);
+            return note.replace("[" + cellRef + "]", value);
+        } catch (IndexOutOfBoundsException e) {
+            throw new IllegalArgumentException("Unable to parse cell reference for " + cellRef);
         }
     }
 

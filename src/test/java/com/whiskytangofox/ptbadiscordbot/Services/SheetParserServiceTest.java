@@ -20,8 +20,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.HashMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -109,13 +108,32 @@ public class SheetParserServiceTest {
     }
 
     @Test
-    public void testReadSheetBadNote(){
+    public void testReadSheetBadNote() {
         notes.put(new CellReference("A1"), "this should throw an exception");
         reader.parseSheet(sheet);
         verify(mockChannel).sendMessage(anyString());
     }
 
+    @Test
+    public void testReplaceCellReference() {
+        values.put(new CellReference("A1"), "new");
+        String note = "playbook_move=[A1]";
+        //notes.put(new CellReference("A2"), note);
+        assertEquals("playbook_move=new", reader.replaceCellReferences(sheet, note));
+    }
 
-
+    @Test
+    public void testReplaceCellReference_exception() {
+        values.put(new CellReference("A1"), "new");
+        String note = "playbook_move=[NotACellReference]";
+        //notes.put(new CellReference("A1"), note);
+        Throwable error = null;
+        try {
+            reader.replaceCellReferences(sheet, note);
+        } catch (Throwable e) {
+            error = e;
+        }
+        assertTrue(error instanceof IllegalArgumentException);
+    }
 
 }
