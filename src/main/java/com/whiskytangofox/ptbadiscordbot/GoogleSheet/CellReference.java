@@ -48,8 +48,8 @@ public class CellReference {
     public String getCellRef(){
         return getColumnString()+row;
     }
-    public String getColumnOffsetCellRef(int offset){
-        return intToCol.get(column+offset) + row;
+    public CellReference getOffsetCell(int columnOffset, int rowOffset){
+        return new CellReference(column+columnOffset, row + rowOffset);
     }
 
     private int getFirstDigit(String range){

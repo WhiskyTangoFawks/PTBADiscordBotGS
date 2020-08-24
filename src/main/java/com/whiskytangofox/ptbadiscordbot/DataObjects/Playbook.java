@@ -38,7 +38,10 @@ public class Playbook {
     }
 
     public boolean isValid() {
-        return player != null && !player.isBlank() && !player.contains("<");
+        return player != null
+                && !player.isBlank()
+                && !player.contains("<")
+                && !title.contains("<");
     }
 
     public StatResponse getStat(String stat) throws IOException, DiscordBotException {
@@ -179,7 +182,7 @@ public class Playbook {
                 .forEach(m -> invalidMsg.append("found move penalty without move: ").append(m).append(System.lineSeparator()));
         stat_penalties.keySet().stream()
                 .filter(m -> !isStat(m))
-                .forEach(m -> invalidMsg.append("found stat penalty without move: ").append(m).append(System.lineSeparator()));
+                .forEach(m -> invalidMsg.append("found stat penalty without stat: ").append(m).append(System.lineSeparator()));
         if (invalidMsg.toString().equalsIgnoreCase(starter)) {
             return null;
         }

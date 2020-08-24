@@ -119,8 +119,17 @@ public class SheetParserServiceTest {
         values.put(new CellReference("A1"), "new");
         String note = "playbook_move=[A1]";
         //notes.put(new CellReference("A2"), note);
-        assertEquals("playbook_move=new", reader.replaceCellReferences(sheet, note));
+        assertEquals("playbook_move=new", reader.replaceCellReferences(sheet, null, note));
     }
+
+    @Test
+    public void testReplaceCellReference_Relative() {
+        values.put(new CellReference(1, 3), "new");
+        String note = "playbook_move=[-1,+1]";
+        CellReference cell = new CellReference(2, 2);
+        assertEquals("playbook_move=new", reader.replaceCellReferences(sheet, cell, note));
+    }
+
 
     @Test
     public void testReplaceCellReference_exception() {
@@ -129,11 +138,14 @@ public class SheetParserServiceTest {
         //notes.put(new CellReference("A1"), note);
         Throwable error = null;
         try {
-            reader.replaceCellReferences(sheet, note);
+            reader.replaceCellReferences(sheet, null, note);
         } catch (Throwable e) {
             error = e;
         }
         assertTrue(error instanceof IllegalArgumentException);
     }
+
+
+
 
 }

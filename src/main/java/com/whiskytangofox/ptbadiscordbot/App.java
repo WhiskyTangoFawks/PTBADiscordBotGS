@@ -26,10 +26,10 @@ public class App extends ListenerAdapter {
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {
         googleSheetAPI = new GoogleSheetAPI();
-        String token = args[0];
-        if (token == null){
-            throw new IllegalArgumentException("Missing discord bot token");
+        if (args.length < 1){
+            throw new NullPointerException("No Discord token supplied - please supply the discord token for the bot as a startup argument");
         }
+        String token = args[0];
         try {
             jda = new JDABuilder(token)
                     .addEventListeners(new App())

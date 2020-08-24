@@ -43,7 +43,6 @@ public class SheetParserService {
     public Playbook playbook = null;
 
     public void parseSheet(RangeWrapper sheet) {
-
         for (int i = sheet.firstCell.getColumnInt(); i < sheet.lastCell.getColumnInt() + 1; i++) {
             for (int j = sheet.firstCell.getRow(); j < sheet.lastCell.getRow() + 1; j++) {
 
@@ -51,7 +50,7 @@ public class SheetParserService {
                     if (sheet.getNote(i, j) != null && !sheet.getNote(i, j).isBlank()) {
                         String note = Utils.cleanString(sheet.getNote(i, j));
                         if (note.contains("[") && note.contains("]")) {
-                            note = replaceCellReferences(sheet, note);
+                            note = replaceCellReferences(sheet, new CellReference(i, j), note);
                         }
                         PARSER parser = PARSER.valueOf(note.split(";")[0].split("=")[0]);
                         String result = parser.parse(this, sheet, playbook, note, i, j);
@@ -73,25 +72,36 @@ public class SheetParserService {
                 }
             }
             checkAndRegisterPlayBook(playbook);
+            playbook = null;
     }
 
     public void checkAndRegisterPlayBook(Playbook book) {
         if (book != null && book.isValid()) {
-            game.sendGameMsg(book.player, "registered playbook *" + book.title + "*");
+            if (game.playbooks.playbooks.containsKey(book.player)){
+                String error = book.player + " has already registered playbook " + game.playbooks.playbooks.get(book.player).title + ", players cannot register more than one playbook";
+                game.sendGameMsg(error);
+                return;
+            }
             book.basicMoves = game.basicMoves;
             book.skippedMoves = game.skippedMoves;
+            game.sendGameMsg(book.player, "registered playbook *" + book.title + "*");
             game.playbooks.playbooks.put(book.player, book);
         }
     }
 
-    public String replaceCellReferences(RangeWrapper range, String note) {
+    public String replaceCellReferences(RangeWrapper range, CellReference cell, String note) {
         String cellRef = null;
         try {
             cellRef = note.substring(note.indexOf("[") + 1, note.indexOf("]"));
-            new CellReference(cellRef);
-            String value = range.getValue(cellRef);
-            return note.replace("[" + cellRef + "]", value);
-        } catch (IndexOutOfBoundsException e) {
+            String replacement = cellRef;
+            if(cellRef.contains(",")){
+                int columnOffset = Integer.parseInt(cellRef.split(",")[0]);
+                int rowOffset = Integer.parseInt(cellRef.split(",")[1]);
+                replacement = cell.getOffsetCell(columnOffset, rowOffset).getCellRef();
+            }
+            String value = range.getValue(replacement);
+            return note.replace("[" + cellRef+ "]", value);
+        } catch (Exception e) {
             throw new IllegalArgumentException("Unable to parse cell reference for " + cellRef);
         }
     }
