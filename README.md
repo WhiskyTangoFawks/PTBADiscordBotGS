@@ -17,9 +17,9 @@ https://discord.gg/NqPrvJ
 https://discord.com/api/oauth2/authorize?client_id=655109520577527821&permissions=2048&scope=bot
 
 ## Compatible Sheets
-To use the bot for a game, make a copy of one of the compatible sheets, add your players and the Discord Bot as editors.
+To use the bot for a game, make a copy of one of the compatible sheets, add your players and the Discord Bot as editors (you can also select "share with the same people" while copying to maintain the sheets bot-shared status).
 
-Dungeon World https://docs.google.com/spreadsheets/d/1h6wadtF753oabRIxIaDOTpjp0de20jfPBzwqUyfpsQY/
+Dungeon World hhttps://docs.google.com/spreadsheets/d/12ovZUJX4ZwMoVobi7lx1cI0jlOYLlkwawS9_cBFBGN8/
 
 HomeBrew World https://docs.google.com/spreadsheets/d/1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqHPgaY/
 
