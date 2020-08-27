@@ -3,18 +3,15 @@ package com.whiskytangofox.ptbadiscordbot;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,17 +27,17 @@ public class AppTest {
     @Mock
     static MessageAction mockMessageAction;
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+    //@Rule
+    //public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    @BeforeClass
+    @BeforeAll
     public static void setupGame() throws Exception {
         logger.info("Running @BeforeClass Setup");
         app = new App();
         App.googleSheetAPI = new GoogleSheetAPI();
     }
 
-    @Before
+    @BeforeEach
     public void setupMocks(){
         MockitoAnnotations.initMocks(this);
         when(mockChannel.sendMessage(anyString())).thenReturn(mockMessageAction);
@@ -49,7 +46,7 @@ public class AppTest {
     //@Test TODO
     public void testRegisterGame() {
         app.registerGame(null, mockChannel, "https://docs.google.com/spreadsheets/d/1JOmnd9jvw4CV24f7zMvfI1otPNNT-UvKExzCYqHPgaY/edit#gid=899958736");
-        assertTrue(App.registeredGames.containsKey(mockChannel));
+        assertTrue(App.registeredGameChannels.containsKey(mockChannel));
     }
 
     //@Test TODO

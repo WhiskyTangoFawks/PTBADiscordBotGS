@@ -6,12 +6,9 @@ import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.RangeWrapper;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetParser.SheetParserService;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 import java.util.HashMap;
 
@@ -29,14 +26,14 @@ public abstract class INoteParserTest {
     Playbook book;
 
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+    //@Rule
+    //public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     static RangeWrapper sheet;
     static HashMap<CellReference, String> values;
     static HashMap<CellReference, String> notes;
 
-    @Before
+    @BeforeEach
     public void before() {
         MockitoAnnotations.initMocks(this);
         values = new HashMap<>();

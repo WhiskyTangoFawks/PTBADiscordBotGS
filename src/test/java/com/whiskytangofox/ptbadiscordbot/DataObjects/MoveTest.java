@@ -1,17 +1,17 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MoveTest {
 
     static HashSet<String> stats = new HashSet<>();
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         stats.add("str");
     }

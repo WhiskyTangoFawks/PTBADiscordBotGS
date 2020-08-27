@@ -1,14 +1,12 @@
 package com.whiskytangofox.ptbadiscordbot.DataObjects;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class MoveBuilderTest {
 
@@ -18,15 +16,15 @@ public class MoveBuilderTest {
             "• Evade, prevent, or counter the enemy’s attack • Strike hard and fast, for 1d6 extra damage, but suffer the enemy’s attack" +
             "On a 7-9, your maneuver works, mostly. Deal Damage but suffer the enemy’s attack."};
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+    //@Rule
+    //public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    @BeforeClass
+    @BeforeAll
     public static void buildHackAndSlash(){
 
     }
 
-    @Before
+    @BeforeEach
     public void setupMocks() {
         MockitoAnnotations.initMocks(this);
     }

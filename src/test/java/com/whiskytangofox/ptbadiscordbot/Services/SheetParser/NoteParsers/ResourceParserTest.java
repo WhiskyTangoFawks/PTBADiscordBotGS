@@ -2,10 +2,11 @@ package com.whiskytangofox.ptbadiscordbot.Services.SheetParser.NoteParsers;
 
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetParser.SheetParserService;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 
 public class ResourceParserTest extends INoteParserTest {
 

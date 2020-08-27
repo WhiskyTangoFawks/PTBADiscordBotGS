@@ -9,15 +9,15 @@ import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.CommandStringInterpreterService.RawToken;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Tokens.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 public class CommandStringInterpreterServiceTest {
@@ -31,7 +31,7 @@ public class CommandStringInterpreterServiceTest {
 
     CommandStringInterpreterService underTest = new CommandStringInterpreterService();
 
-    @Before
+    @BeforeEach
     public void before() throws KeyConflictException, IOException, DiscordBotException {
         MockitoAnnotations.initMocks(this);
         when(mockBook.isMove("move")).thenReturn(true);

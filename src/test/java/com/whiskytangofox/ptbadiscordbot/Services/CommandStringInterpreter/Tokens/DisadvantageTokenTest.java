@@ -1,9 +1,10 @@
 package com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Tokens;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class DisadvantageTokenTest extends ITokenTest {
     DisadvantageToken underTest = new DisadvantageToken();

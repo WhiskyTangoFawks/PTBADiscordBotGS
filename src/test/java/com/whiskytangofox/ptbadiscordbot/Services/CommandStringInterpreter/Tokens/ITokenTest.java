@@ -4,7 +4,7 @@ import com.whiskytangofox.ptbadiscordbot.DataObjects.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Command;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -20,7 +20,7 @@ public abstract class ITokenTest {
 
     Command command;
 
-    @Before
+    @BeforeEach
     public void before() {
         MockitoAnnotations.initMocks(this);
         command = new Command(mockBook, "");

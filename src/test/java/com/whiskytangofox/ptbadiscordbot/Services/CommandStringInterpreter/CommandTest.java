@@ -5,12 +5,12 @@ import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 public class CommandTest {
@@ -23,7 +23,7 @@ public class CommandTest {
     @Mock
     GoogleSheetAPI mockApi;
 
-    @Before
+    @BeforeEach
     public void before() {
         MockitoAnnotations.initMocks(this);
         mockBook.sheet = new SheetAPIService(null, mockApi, new GameSettings());

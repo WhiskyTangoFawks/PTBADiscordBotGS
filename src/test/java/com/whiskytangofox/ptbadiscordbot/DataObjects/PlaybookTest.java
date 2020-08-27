@@ -8,9 +8,9 @@ import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.MissingValueException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -41,7 +41,7 @@ public class PlaybookTest {
 
     String testPlayer = "test";
 
-    @Before
+    @BeforeEach
     public void before() {
         MockitoAnnotations.initMocks(this);
         mockSheetService.settings = mockSettings;
@@ -351,7 +351,7 @@ public class PlaybookTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetMovePenalty_secondaryMove() throws IOException {
         //TODO - implement this or commit to NOT doing it
         book.movePenalties.put("move", new CellReference("A1"));

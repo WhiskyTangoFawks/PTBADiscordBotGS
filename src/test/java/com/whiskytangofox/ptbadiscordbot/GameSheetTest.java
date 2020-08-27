@@ -5,16 +5,16 @@ import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.GoogleSheetAPI;
 import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GameSheetTest {
 
@@ -29,13 +29,13 @@ public class GameSheetTest {
     Move secondaryMove;
     Playbook book;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
-        logger.info("Running @BeforeClass Setup");
+
 
     }
 
-    @Before
+    @BeforeEach
     public void setupGame() throws Exception {
         game = new GameGoogle(null, null, null, false);
         MockitoAnnotations.initMocks(this);

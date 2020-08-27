@@ -2,10 +2,10 @@ package com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Toke
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Move;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class MoveTokenTest extends ITokenTest {

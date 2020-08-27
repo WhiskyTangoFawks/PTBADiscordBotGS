@@ -3,12 +3,12 @@ package com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Toke
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Responses.StatResponse;
 import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Command;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class StatTokenTest extends ITokenTest {

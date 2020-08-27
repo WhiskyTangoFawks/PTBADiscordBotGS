@@ -3,8 +3,8 @@ package com.whiskytangofox.ptbadiscordbot.Services;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Dice;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Command;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -12,7 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class DiceServiceTest {
 
@@ -24,7 +25,7 @@ public class DiceServiceTest {
     @Mock
     Playbook mockBook;
 
-    @Before
+    @BeforeEach
     public void before() {
         MockitoAnnotations.initMocks(this);
         command = new Command(mockBook, "test roll");

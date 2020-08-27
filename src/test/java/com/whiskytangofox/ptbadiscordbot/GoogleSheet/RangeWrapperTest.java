@@ -1,13 +1,15 @@
 package com.whiskytangofox.ptbadiscordbot.GoogleSheet;
 
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+
 
 public class RangeWrapperTest {
 
@@ -15,7 +17,7 @@ public class RangeWrapperTest {
     static GoogleSheetAPI api;
     String sheetID = "1zwZlDaLdNDF7vs5Gx_WVFf19-E_IAy6pCNp_guQjMko";
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws IOException, GeneralSecurityException {
         logger.info("Running @BeforeClass Setup");
         api = new GoogleSheetAPI();

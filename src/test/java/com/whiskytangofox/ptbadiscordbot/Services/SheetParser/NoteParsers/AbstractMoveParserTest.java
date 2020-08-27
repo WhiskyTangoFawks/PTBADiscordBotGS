@@ -2,11 +2,15 @@ package com.whiskytangofox.ptbadiscordbot.Services.SheetParser.NoteParsers;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.MoveBuilder;
 import com.whiskytangofox.ptbadiscordbot.GoogleSheet.CellReference;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+;
+
+
 
 public class AbstractMoveParserTest extends INoteParserTest {
 

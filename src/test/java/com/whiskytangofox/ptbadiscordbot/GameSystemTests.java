@@ -13,8 +13,8 @@ import com.whiskytangofox.ptbadiscordbot.Services.SheetAPIService;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class GameSystemTests {
 
     GameGoogle underTest;
 
-    @Before
+    @BeforeEach
     public void setupGame() throws Exception {
         underTest = new GameGoogle(null, null, null, false);
         MockitoAnnotations.initMocks(this);
