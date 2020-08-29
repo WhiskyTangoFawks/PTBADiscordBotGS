@@ -1,0 +1,1 @@
+heroku logs --app pbta-discord-bot --tail

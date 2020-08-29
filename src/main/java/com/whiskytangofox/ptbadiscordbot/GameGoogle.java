@@ -2,6 +2,8 @@ package com.whiskytangofox.ptbadiscordbot;
 
 import com.whiskytangofox.ptbadiscordbot.DataObjects.GameSettings;
 import com.whiskytangofox.ptbadiscordbot.DataObjects.Playbook;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.DiscordBotException;
+import com.whiskytangofox.ptbadiscordbot.Exceptions.KeyConflictException;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.Command;
 import com.whiskytangofox.ptbadiscordbot.Services.CommandStringInterpreter.CommandStringInterpreterService;
 import com.whiskytangofox.ptbadiscordbot.Services.DiceService;
@@ -47,23 +49,7 @@ public class GameGoogle extends AbstractGameGoogleSheetMethods {
             if (msg.startsWith(c)) {// /alias string
                 msg = msg.toLowerCase().replace(c, "");
 
-                Playbook book = playbooks.getPlaybook(player);
-                Command command = interpreter.interpretCommandString(book, msg);
-                String response = "";
-                if (command.move != null) {
-                    response = response + command.move.text + System.lineSeparator();
-                }
-                if (command.doRoll) {
-                    response = response
-                            + event.getAuthor().getAsMention()
-                            + " "
-                            + rollerService.roll(command);
-                } else if (command.resource != null) {
-                    int sum = command.modifiers.stream().mapToInt(m -> m.mod).sum();
-                    response = response + book.modifyResource(command.resource, sum).getDescriptiveResult();
-                }
-                sendGameMsg(response);
-                return (response);
+                return runCommand(event.getAuthor().getName(), msg);
             }
 
         } catch (Throwable e) {
@@ -72,6 +58,25 @@ public class GameGoogle extends AbstractGameGoogleSheetMethods {
             return (e.toString());
         }
         return "No command character detected";
+    }
+
+    public String runCommand(String player, String msg) throws DiscordBotException, KeyConflictException, IOException {
+        Playbook book = playbooks.getPlaybook(player);
+        Command command = interpreter.interpretCommandString(book, msg);
+        String response = "";
+        if (command.move != null) {
+            response = response + command.move.text + System.lineSeparator();
+        }
+        if (command.doRoll) {
+            response = response
+                    + " "
+                    + rollerService.roll(command);
+        } else if (command.resource != null) {
+            int sum = command.modifiers.stream().mapToInt(m -> m.mod).sum();
+            response = response + book.modifyResource(command.resource, sum).getDescriptiveResult();
+        }
+        sendGameMsg(player, response);
+        return (response);
     }
 
     public void reloadGame() throws IOException {

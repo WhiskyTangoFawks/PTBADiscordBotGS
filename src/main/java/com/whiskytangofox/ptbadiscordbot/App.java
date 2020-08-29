@@ -22,16 +22,22 @@ public class App extends ListenerAdapter {
     public static final Logger logger = LoggerFactory.getLogger(App.class);
     public static GoogleSheetAPI googleSheetAPI;
     static JDA jda;
-    static HashMap<MessageChannel, GameGoogle> registeredGames = new HashMap<>();
+    static HashMap<MessageChannel, GameGoogle> registeredGameChannels = new HashMap<>();
+    public static HashMap<String, GameGoogle> registeredGameSheets = new HashMap<>();
 
-    public static void main(String[] args) throws GeneralSecurityException, IOException {
+    public static void mainApp(String... args) throws GeneralSecurityException, IOException {
+        App.logger.info("************************************Running main method");
         googleSheetAPI = new GoogleSheetAPI();
-        if (args.length < 1){
-            throw new NullPointerException("No Discord token supplied - please supply the discord token for the bot as a startup argument");
+        if (System.getenv("bot_token") == null){
+            throw new NullPointerException("No Discord token supplied - please set the discord_bot environmental variable");
         }
-        String token = args[0];
+        startJDA();
+    }
+
+
+    public static void startJDA() throws IOException, GeneralSecurityException {
         try {
-            jda = new JDABuilder(token)
+            jda = new JDABuilder(System.getenv("bot_token"))
                     .addEventListeners(new App())
                     .build();
             //TODO - fix custom status
@@ -51,10 +57,10 @@ public class App extends ListenerAdapter {
         }
         String msg = event.getMessage().getContentDisplay();
 
-        if (registeredGames.containsKey(event.getChannel())) {
-            registeredGames.get(event.getChannel()).OnMessageReceived(event);
+        if (registeredGameChannels.containsKey(event.getChannel())) {
+            registeredGameChannels.get(event.getChannel()).OnMessageReceived(event);
         } else if (msg.startsWith("!")) {
-            event.getChannel().sendMessage("No game registered for this channel, please post your google sheet URL in the chat if you want to use this bot");
+            event.getChannel().sendMessage("No game registered for this channel, please post your google sheet URL in the chat if you want to use this bot").queue();
         }
 
         if (msg.contains("docs.google.com/spreadsheets")) {
@@ -68,7 +74,9 @@ public class App extends ListenerAdapter {
             String sheetID = getSheetID(msg);
             GameGoogle game = new GameGoogle(guild, channel, sheetID, msg.contains("debug"));
             channel.sendMessage("Game registered.").queue();
-            registeredGames.put(channel, game);
+            registeredGameChannels.put(channel, game);
+            registeredGameSheets.put(sheetID, game);
+            logger.info("Registered game for: " + sheetID);
             return true;
         } catch (Throwable e) {
             String response = switch (e.getMessage().substring(0, 3)) {
@@ -78,7 +86,7 @@ public class App extends ListenerAdapter {
             };
             logger.info(response);
             e.printStackTrace();
-            channel.sendMessage(response);
+            channel.sendMessage(response).queue();
             return false;
         }
     }
@@ -88,11 +96,15 @@ public class App extends ListenerAdapter {
             int start = msg.indexOf("/d/")+3;
             int end = msg.lastIndexOf("/");
             return msg.substring(start, end);
+
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to extract sheet ID");
         }
     }
 
-    //TODO - add a REST service which allows commands to be received
+    public static GameGoogle getGameForSheet(String sheetID){
+        return registeredGameSheets.get(sheetID);
+    }
+
 
 }

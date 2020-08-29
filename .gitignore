@@ -1,7 +1,3 @@
 /target/
-/properties/
 /properties/config.properties
 /src/main/resources/service_credentials.json
-/src/main/resources/Procfile
-/src/main/resources/service_credentials.json
-/src/main/resources/system.properties

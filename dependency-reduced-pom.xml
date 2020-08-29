@@ -4,7 +4,7 @@
   <groupId>org.WhiskyTangoFox</groupId>
   <artifactId>PbtADiscordBot</artifactId>
   <name>PtbADiscordBot</name>
-  <version>1.0-SNAPSHOT</version>
+  <version>1</version>
   <build>
     <plugins>
       <plugin>
@@ -45,18 +45,6 @@
   </repositories>
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>hamcrest-core</artifactId>
-          <groupId>org.hamcrest</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>3.3.3</version>
@@ -76,11 +64,75 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>4.3.1</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>groovy</artifactId>
+          <groupId>org.codehaus.groovy</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>groovy-xml</artifactId>
+          <groupId>org.codehaus.groovy</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>httpmime</artifactId>
+          <groupId>org.apache.httpcomponents</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>hamcrest</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>tagsoup</artifactId>
+          <groupId>org.ccil.cowan.tagsoup</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>json-path</artifactId>
+          <groupId>io.rest-assured</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>xml-path</artifactId>
+          <groupId>io.rest-assured</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <version>1.7.1.Final</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>quarkus-bootstrap-core</artifactId>
+          <groupId>io.quarkus</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>org.eclipse.sisu.inject</artifactId>
+          <groupId>org.eclipse.sisu</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>quarkus-test-common</artifactId>
+          <groupId>io.quarkus</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>xstream</artifactId>
+          <groupId>com.thoughtworks.xstream</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
   <properties>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.target>14</maven.compiler.target>
     <java.version>14</java.version>
-    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.source>14</maven.compiler.source>
     <jdkVersion>14</jdkVersion>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4jVersion>1.6.1</slf4jVersion>

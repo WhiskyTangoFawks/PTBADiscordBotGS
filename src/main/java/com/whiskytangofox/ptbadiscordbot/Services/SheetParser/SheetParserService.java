@@ -61,7 +61,6 @@ public class SheetParserService {
                         String emsg = "Unable to parse notation found in cell " + cell.getCellRef() + ", note= " + sheet.getNote(i, j);
                     logger.error(emsg);
                     game.sendGameMsg(emsg);
-                    e.printStackTrace();
                     } catch (Throwable e){
                         String ref = new CellReference(i, j).getCellRef();
                         String emsg = e.toString() + " reading: " + sheet.tab + "!" + ref;
