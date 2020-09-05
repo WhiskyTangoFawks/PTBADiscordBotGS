@@ -19,8 +19,8 @@ import static com.whiskytangofox.ptbadiscordbot.App.logger;
 
 public class GameGoogle extends AbstractGameGoogleSheetMethods {
 
-    public final Guild guild;
-    public final MessageChannel channel;
+    public Guild guild;
+    public MessageChannel channel;
     protected final boolean debugLog;
 
     protected CommandStringInterpreterService interpreter = new CommandStringInterpreterService();
@@ -31,7 +31,7 @@ public class GameGoogle extends AbstractGameGoogleSheetMethods {
         this.guild = guild;
         this.channel = channel;
         this.debugLog = debug;
-        if (sheetID != null) {
+        if (sheetID != null && !sheetID.equalsIgnoreCase("test")) {
             initGame();
             postInit();
         }

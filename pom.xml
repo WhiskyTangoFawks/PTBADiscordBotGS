@@ -53,7 +53,7 @@
         <!-- https://mvnrepository.com/artifact/io.quarkus/quarkus-resteasy -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy</artifactId>
+            <artifactId>quarkus-resteasy-jsonb</artifactId>
             <version>1.7.1.Final</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.rest-assured/rest-assured -->

@@ -64,15 +64,15 @@ public class App extends ListenerAdapter {
         }
 
         if (msg.contains("docs.google.com/spreadsheets")) {
-            registerGame(event.getGuild(), event.getChannel(), msg);
+            String sheetID = getSheetID(msg);
+            registerGame(event.getGuild(), event.getChannel(), sheetID,  msg.contains("debug"));
         }
     }
 
-    public boolean registerGame(Guild guild, MessageChannel channel, String msg) {
+    public static boolean registerGame(Guild guild, MessageChannel channel, String sheetID, boolean debug) {
         try {
             channel.sendMessage("Sheet Link Detected, attempting to register game").queue();
-            String sheetID = getSheetID(msg);
-            GameGoogle game = new GameGoogle(guild, channel, sheetID, msg.contains("debug"));
+            GameGoogle game = new GameGoogle(guild, channel, sheetID, debug);
             channel.sendMessage("Game registered.").queue();
             registeredGameChannels.put(channel, game);
             registeredGameSheets.put(sheetID, game);
